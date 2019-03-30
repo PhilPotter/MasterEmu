@@ -83,3 +83,4 @@ lint/reports/
 app/release/
 app/src/main/libs/
 app/src/main/obj/
+.idea/
