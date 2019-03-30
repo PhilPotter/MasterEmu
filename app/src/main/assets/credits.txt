@@ -10,7 +10,7 @@ Also, many thanks to unfnknblvbl from SMSPower.org for helping to test the Andro
 
 Codebase uses SDL and SDL_image for cross-platform purposes, as it is based upon CMasterSystem, a PC based project of Phil Potter.
 
-Please show your love and constructive feedback by e-mailing support@philpotter.co.uk - feature requests are welcome. Also, checkout the git repository at https://github.com/PhilPotter/MasterEmu and build your own copy if desired.
+Please show your love and constructive feedback by e-mailing support@philpotter.co.uk - feature requests are welcome. Also, checkout the git repository at https://github.com/PhilPotter/MasterEmu and build your own copy if desired. MasterEmu is licensed under the GNU General Public License, version 3.
 
 Changelog for this release (3.3):
 
