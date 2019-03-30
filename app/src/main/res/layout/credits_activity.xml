@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_colour"
+    android:gravity="center_horizontal">
+
+    <TextView android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_colour"
+        android:textStyle="bold"
+        android:textSize="24sp"
+        android:text="@string/credits_header"
+        android:layout_marginBottom="5sp"/>
+
+    <TextView android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="vertical"
+        android:id="@+id/credits_view"
+        android:textColor="@color/text_colour"
+        android:textSize="18sp"
+        android:gravity="center_horizontal"
+        android:paddingLeft="5sp"
+        android:paddingRight="5sp"/>
+
+</LinearLayout>
+

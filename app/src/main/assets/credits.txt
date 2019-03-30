@@ -1,0 +1,21 @@
+Programmer: Phil Potter
+
+Art/Icon Consultant: Becky Potter
+
+Testers: Phil Potter
+Becky Potter
+Laurence Williams
+
+Also, many thanks to unfnknblvbl from SMSPower.org for helping to test the Android TV support and finding many bugs for me to fix, and thanks to Fat32 from dsp.stackexchange.org for helping me with a problem I had with the resampling math.
+
+Codebase uses SDL and SDL_image for cross-platform purposes, as it is based upon CMasterSystem, a PC based project of Phil Potter.
+
+Please show your love and constructive feedback by e-mailing support@philpotter.co.uk - feature requests are welcome. Also, checkout the git repository at https://github.com/PhilPotter/MasterEmu and build your own copy if desired.
+
+Changelog for this release (3.3):
+
+* Fixed a bug with how I/O port 3E was disabling main memory in certain cases when it shouldn't. This corrects the behaviour in G-LOC - Air Battle where the game crashes at the end of the first level.
+
+* Replaced in-app purchase donations with a 'BuyMeACoffee' link. Hopefully this will be less pushy to users.
+
+* Open sourced MasterEmu under GPLv3, and placed on GitHub at https://github.com/PhilPotter/MasterEmu

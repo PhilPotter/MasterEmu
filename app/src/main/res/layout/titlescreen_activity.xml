@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout android:orientation="vertical" android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/background_colour"
+        android:gravity="center_vertical"
+        android:id="@+id/titlescreen_wait"
+        android:visibility="visible">
+
+        <LinearLayout android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal">
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_colour"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:text="@string/wait_str" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <ScrollView android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:visibility="gone"
+        android:id="@+id/titlescreen_go">
+
+        <LinearLayout android:orientation="vertical" android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/background_colour"
+            android:gravity="center_horizontal"
+            android:id="@+id/titlescreen_root">
+
+            <LinearLayout android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="5sp"
+                android:gravity="center_horizontal">
+                <ImageView android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_launcher"
+                    android:paddingRight="10sp"/>
+                <TextView android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_colour"
+                    android:textStyle="bold"
+                    android:textSize="30sp"
+                    android:text="@string/app_name" />
+                <ImageView android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_launcher"
+                    android:paddingLeft="10sp"/>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginBottom="10sp"
+                android:gravity="center">
+                <uk.co.philpotter.masteremu.ControllerTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_colour"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:text="Load ROM"
+                    android:id="@+id/title_load_button"
+                    android:padding="5sp"
+                    android:background="@drawable/view_border"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginBottom="10sp"
+                android:gravity="center">
+                <uk.co.philpotter.masteremu.ControllerTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_colour"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:text="Options"
+                    android:id="@+id/title_options_button"
+                    android:padding="5sp"
+                    android:background="@drawable/view_border"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginBottom="10sp"
+                android:gravity="center">
+                <uk.co.philpotter.masteremu.ControllerTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_colour"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:text="Help"
+                    android:id="@+id/title_help_button"
+                    android:padding="5sp"
+                    android:background="@drawable/view_border"
+                    android:gravity="center" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginBottom="10sp"
+                android:gravity="center">
+                <uk.co.philpotter.masteremu.ControllerTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_colour"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:text="Credits"
+                    android:id="@+id/title_credits_button"
+                    android:padding="5sp"
+                    android:background="@drawable/view_border"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginBottom="10sp"
+                android:gravity="center">
+                <uk.co.philpotter.masteremu.ControllerTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_colour"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:text="Extras"
+                    android:id="@+id/title_extras_button"
+                    android:padding="5sp"
+                    android:background="@drawable/view_border"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginBottom="10sp"
+                android:gravity="center">
+                <uk.co.philpotter.masteremu.ControllerTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_colour"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:text="Manage States"
+                    android:id="@+id/title_manage_states_button"
+                    android:padding="5sp"
+                    android:background="@drawable/view_border"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center">
+                <uk.co.philpotter.masteremu.ControllerTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_colour"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:text="Exit to Android"
+                    android:id="@+id/title_exit_button"
+                    android:padding="5sp"
+                    android:background="@drawable/view_border"
+                    android:gravity="center"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

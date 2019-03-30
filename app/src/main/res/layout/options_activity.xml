@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout android:orientation="vertical" android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/background_colour"
+        android:gravity="center_horizontal"
+        android:id="@+id/options_root">
+
+        <TextView android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_colour"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:text="@string/options_header"
+            android:layout_marginBottom="5sp"
+            android:id="@+id/options_title"/>
+
+        <LinearLayout android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lock Screen Orientation"
+                android:textSize="18sp"
+                android:textColor="@color/text_colour"/>
+            <uk.co.philpotter.masteremu.ControllerCheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="5sp"
+                android:paddingBottom="5sp"
+                android:id="@+id/orientation_lock"/>
+        </LinearLayout>
+
+        <LinearLayout android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Disable Sound"
+                android:textSize="18sp"
+                android:textColor="@color/text_colour"/>
+            <uk.co.philpotter.masteremu.ControllerCheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="5sp"
+                android:paddingBottom="5sp"
+                android:id="@+id/disable_sound"/>
+        </LinearLayout>
+
+        <LinearLayout android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Larger controller buttons"
+                android:textSize="18sp"
+                android:textColor="@color/text_colour"/>
+            <uk.co.philpotter.masteremu.ControllerCheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="5sp"
+                android:paddingBottom="5sp"
+                android:id="@+id/larger_buttons"/>
+        </LinearLayout>
+
+        <LinearLayout android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Disable touch button overlay"
+                android:textSize="18sp"
+                android:textColor="@color/text_colour"/>
+            <uk.co.philpotter.masteremu.ControllerCheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="5sp"
+                android:paddingBottom="5sp"
+                android:id="@+id/no_buttons"/>
+        </LinearLayout>
+
+        <LinearLayout android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Set system to Japanese mode"
+                android:textSize="18sp"
+                android:textColor="@color/text_colour"/>
+            <uk.co.philpotter.masteremu.ControllerCheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="5sp"
+                android:paddingBottom="5sp"
+                android:id="@+id/japanese_mode"/>
+        </LinearLayout>
+
+        <LinearLayout android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No screen stretching"
+                android:textSize="18sp"
+                android:textColor="@color/text_colour"/>
+            <uk.co.philpotter.masteremu.ControllerCheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="5sp"
+                android:paddingBottom="5sp"
+                android:id="@+id/no_stretching"/>
+        </LinearLayout>
+
+        <LinearLayout android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enable Game Genie/Action Replay"
+                android:textSize="18sp"
+                android:textColor="@color/text_colour"/>
+            <uk.co.philpotter.masteremu.ControllerCheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="5sp"
+                android:paddingBottom="5sp"
+                android:id="@+id/game_genie"/>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center">
+            <uk.co.philpotter.masteremu.ControllerTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_colour"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:text="Apply"
+                android:layout_marginBottom="5sp"
+                android:layout_marginTop="5sp"
+                android:id="@+id/options_apply_button"
+                android:padding="5sp"
+                android:background="@drawable/view_border"
+                android:gravity="center"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

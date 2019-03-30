@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/codes_dialogue_colour">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_colour"
+        android:textStyle="bold"
+        android:textSize="24sp"
+        android:text="@string/codes_dialogue_header"
+        android:gravity="center_horizontal"/>
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25sp"
+        android:layout_marginBottom="25sp"
+        android:orientation="horizontal"
+        android:id="@+id/codes_dialogue_button_group"
+        android:gravity="center_horizontal"
+        android:checkedButton="@+id/codes_dialogue_ar_button">
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="25sp"
+            android:text="@string/codes_dialogue_type_ar"
+            android:textSize="18sp"
+            android:textColor="@color/text_colour"
+            android:id="@+id/codes_dialogue_ar_button"/>
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/codes_dialogue_type_gg"
+            android:textSize="18sp"
+            android:textColor="@color/text_colour"
+            android:id="@+id/codes_dialogue_gg_button"/>
+
+    </RadioGroup>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:text="@string/codes_dialogue_description_header"
+        android:layout_marginLeft="18sp"
+        android:textColor="@color/text_colour"/>
+
+    <EditText android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:inputType="textNoSuggestions"
+        android:layout_marginLeft="18sp"
+        android:layout_marginRight="18sp"
+        android:id="@+id/codes_dialogue_description_input"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:text="@string/codes_dialogue_code_header"
+        android:textColor="@color/text_colour"
+        android:gravity="center_horizontal"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/codes_dialogue_ar_container"
+        android:gravity="center_horizontal">
+
+        <EditText
+            android:id="@+id/codes_dialogue_ar_code_input_1"
+            android:maxLength="4"
+            android:layout_width="72sp"
+            android:layout_height="wrap_content"
+            android:inputType="textNoSuggestions"
+            android:textSize="18sp"
+            android:layout_marginRight="9sp"/>
+
+        <EditText
+            android:id="@+id/codes_dialogue_ar_code_input_2"
+            android:maxLength="4"
+            android:layout_width="72sp"
+            android:layout_height="wrap_content"
+            android:inputType="textNoSuggestions"
+            android:textSize="18sp"
+            android:layout_marginLeft="9sp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        android:id="@+id/codes_dialogue_gg_container"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/codes_dialogue_gg_code_input_1"
+            android:maxLength="3"
+            android:layout_width="54sp"
+            android:layout_height="wrap_content"
+            android:inputType="textNoSuggestions"
+            android:textSize="18sp"
+            android:layout_marginRight="9sp"/>
+
+        <EditText
+            android:id="@+id/codes_dialogue_gg_code_input_2"
+            android:maxLength="3"
+            android:layout_width="54sp"
+            android:layout_height="wrap_content"
+            android:inputType="textNoSuggestions"
+            android:textSize="18sp"
+            android:layout_marginLeft="9sp"
+            android:layout_marginRight="9sp"/>
+
+        <EditText
+            android:id="@+id/codes_dialogue_gg_code_input_3"
+            android:maxLength="3"
+            android:layout_width="54sp"
+            android:layout_height="wrap_content"
+            android:inputType="textNoSuggestions"
+            android:textSize="18sp"
+            android:layout_marginLeft="9sp"/>
+
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="18sp" />
+
+</LinearLayout>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_colour"
+    android:gravity="center_horizontal"
+    android:id="@+id/pause_root">
+
+    <TextView android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_colour"
+        android:textStyle="bold"
+        android:textSize="24sp"
+        android:text="@string/pause_header"
+        android:gravity="center_horizontal" />
+
+    <LinearLayout android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center">
+        <uk.co.philpotter.masteremu.ControllerTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_colour"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:text="Resume"
+            android:id="@+id/pause_resume_button"
+            android:padding="5sp"
+            android:background="@drawable/view_border"
+            android:gravity="center"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center">
+        <uk.co.philpotter.masteremu.ControllerTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_colour"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:text="Load State"
+            android:id="@+id/pause_loadstate_button"
+            android:padding="5sp"
+            android:background="@drawable/view_border"
+            android:gravity="center"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center">
+        <uk.co.philpotter.masteremu.ControllerTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_colour"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:text="Save State"
+            android:id="@+id/pause_savestate_button"
+            android:padding="5sp"
+            android:background="@drawable/view_border"
+            android:gravity="center" />
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center">
+        <uk.co.philpotter.masteremu.ControllerTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_colour"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:text="Exit to Main Menu"
+            android:id="@+id/pause_exit_button"
+            android:padding="5sp"
+            android:background="@drawable/view_border"
+            android:gravity="center"/>
+    </LinearLayout>
+
+</LinearLayout>

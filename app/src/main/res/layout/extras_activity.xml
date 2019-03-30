@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout android:orientation="vertical" android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/background_colour"
+        android:gravity="center_horizontal"
+        android:id="@+id/extras_root">
+
+        <TextView android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_colour"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:text="@string/extras_header"
+            android:layout_marginBottom="5sp"
+            android:id="@+id/extras_title"/>
+
+        <TextView android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical"
+            android:id="@+id/extras_blurb"
+            android:textColor="@color/text_colour"
+            android:textSize="18sp"
+            android:gravity="center_horizontal"
+            android:paddingLeft="5sp"
+            android:paddingRight="5sp"/>
+
+        <LinearLayout android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginBottom="5sp"
+            android:layout_marginTop="5sp">
+            <uk.co.philpotter.masteremu.ControllerTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_colour"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:text="Donate to help MasterEmu"
+                android:id="@+id/extras_donate_button"
+                android:padding="5sp"
+                android:background="@drawable/view_border"
+                android:gravity="center"/>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginBottom="5sp"
+            android:layout_marginTop="20sp">
+            <uk.co.philpotter.masteremu.ControllerTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_colour"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:text="View source code"
+                android:id="@+id/extras_source_button"
+                android:padding="5sp"
+                android:background="@drawable/view_border"
+                android:gravity="center"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

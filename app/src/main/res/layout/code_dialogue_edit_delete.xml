@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/codes_dialogue_colour">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_colour"
+        android:textStyle="bold"
+        android:textSize="24sp"
+        android:text="@string/codes_dialogue_edit_delete_header"
+        android:gravity="center_horizontal"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:text="@string/codes_dialogue_edit_delete_explanation"
+        android:layout_marginLeft="18sp"
+        android:textColor="@color/text_colour"
+        android:gravity="center_horizontal"/>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="18sp" />
+
+</LinearLayout>

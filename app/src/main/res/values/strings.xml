@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MasterEmu</string>
+    <string name="filebrowser_header">Choose a ROM</string>
+    <string name="filebrowser_search">Filter:</string>
+    <string name="filebrowser_header_import_states">Choose a State ZIP File</string>
+    <string name="filebrowser_header_export_states">Choose an Export Directory</string>
+    <string name="pause_header">Emulator Paused</string>
+    <string name="help_header">Help</string>
+    <string name="credits_header">Credits</string>
+    <string name="statebrowser_header">Choose a Save State</string>
+    <string name="codes_header">Cheat Codes</string>
+    <string name="codes_explanation">Long tap this bar or press X to add a code. Long tap or press Y on a selected code to edit or delete it. To enable a code, tap it or press A to turn it green.\n\nTo start the game, tap this bar or press start.</string>
+    <string name="codes_dialogue_header">Add/Edit Code</string>
+    <string name="codes_dialogue_edit_delete_header">Choose Action</string>
+    <string name="codes_dialogue_edit_delete_explanation">Press a button below to edit, delete or cancel.</string>
+    <string name="codes_dialogue_delete_header">Are You Sure?</string>
+    <string name="codes_dialogue_delete_explanation">Press Yes to confirm - this will remove the selected code.</string>
+    <string name="codes_dialogue_type_ar">Action Replay</string>
+    <string name="codes_dialogue_type_gg">Game Genie</string>
+    <string name="codes_dialogue_description_header">Description:</string>
+    <string name="codes_dialogue_code_header">Code:</string>
+    <string name="options_header">Options</string>
+    <string name="extras_header">Extras</string>
+    <string name="managestates_header">Manage States</string>
+    <string name="wait_str">Please Wait</string>
+    <string name="buy_me_a_coffee_url">https://buymeacoff.ee/YlPLXxIfz</string>
+    <string name="github_url">https://github.com/PhilPotter/MasterEmu</string>
+</resources>

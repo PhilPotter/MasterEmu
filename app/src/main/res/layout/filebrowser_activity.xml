@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_colour"
+    android:gravity="center_horizontal">
+
+    <TextView android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_colour"
+        android:textStyle="bold"
+        android:textSize="24sp"
+        android:text="@string/filebrowser_header"
+        android:id="@+id/filebrowser_header"
+        android:gravity="center_horizontal" />
+
+    <RelativeLayout android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal" >
+        <uk.co.philpotter.masteremu.ControllerTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="INTERNAL"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_colour"
+            android:background="@drawable/view_border"
+            android:layout_marginRight="20sp"
+            android:layout_marginTop="5sp"
+            android:layout_marginBottom="5sp"
+            android:padding="5sp"
+            android:id="@+id/internal_view"/>
+        <uk.co.philpotter.masteremu.ControllerTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EXTERNAL"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_greyed_out"
+            android:background="@drawable/view_greyed_out_border"
+            android:layout_marginLeft="20sp"
+            android:layout_marginTop="5sp"
+            android:layout_marginBottom="5sp"
+            android:padding="5sp"
+            android:layout_toRightOf="@id/internal_view"
+            android:id="@+id/external_view"/>
+    </RelativeLayout>
+
+    <LinearLayout android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:id="@+id/search_area">
+
+        <TextView android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_colour"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:text="@string/filebrowser_search"
+            android:layout_marginLeft="10sp"
+            android:layout_marginRight="10sp"/>
+
+        <EditText android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textColor="@color/text_colour"
+            android:background="@drawable/search_background"
+            android:inputType="textNoSuggestions"
+            android:layout_marginRight="10sp"
+            android:id="@+id/search_text"/>
+
+    </LinearLayout>
+
+    <uk.co.philpotter.masteremu.EmuGridView android:id="@+id/filegrid"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:numColumns="auto_fit"
+        android:columnWidth="90dp"
+        android:listSelector="@color/selector_colour"/>
+
+</LinearLayout>

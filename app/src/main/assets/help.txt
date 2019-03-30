@@ -1,0 +1,22 @@
+The interface for MasterEmu is quite straightforward. The ‘Options’ menu allows you to change and save various options – the number of options is likely to grow with subsequent releases. MasterEmu supports physical controllers - scroll to the bottom to see the mappings for each button (although they are fairly obvious). The touch overlay can be disabled in the options menu also, to provide a better picture when using a controller. One can also switch between US/European and Japanese console versions. Pro Action Replay and Game Genie support can now be enabled here, and a ROM can be loaded with both types of code simultaneously.
+
+The ‘Credits’ screen is just a little filler screen I put in as this is my (Phil’s) first Android project, and prior to this the project has quite a history: It started as a Java-based PC program called JMasterSystem, which I then rewrote entirely in C. This rewrite was substantially improved from my original Java version, and is the basis of this release.
+
+The 'Extras' screen allows a user to contribute and fund further development. Any support is always appreciated!
+
+The meat of the interface is in the ‘Load ROM’ screen. This screen allows the user to browse both internal storage and an SD card if it’s present, and will present both Sega Master System (.sms) and Sega Game Gear (.gg) ROMs. Touching a ROM is all that is required to load it, and it goes without saying that you must obtain the ROM yourself and already own the game you are emulating. This release supports default ROM directories - just press/touch the 'Set as Default Dir' icon in whichever folder you are in, and it becomes the default. In addition, ZIP files are now visible in the interface. Pressing/touching a ZIP file will open it and display all the ROM files within, to be loaded as usual. To filter the currently displayed ROM files, just type part of the filename into the filter box.
+
+Upon loading the ROM a set of touch buttons can be used to play, just as if playing on a real console - the '1 and 2' button makes both action buttons press down at once, and has the same effect as mashing them both on the real console. The screen can also be rotated, unless this is locked in the ‘Options’ screen. Pressing the back button will present an emulator ‘Pause’ menu that can be used to load and create save states and exit the action.
+
+Save state management is supported from v3.0 onwards - from the main menu select 'Manage States' and there is the ability to export all states on the device to a ZIP file, import all states from a ZIP file and finally wipe all states from the device. Additionally, one can delete individual states on the state browser in the pause menu, just by long-pressing on the state from a touch screen or pressing X (or equivalent) on your physical controller. As of v3.2 onwards, the state backups also include any inputted cheat codes.
+
+Physical game controllers are supported. I used an Xbox 360 controller to get this working, but it bypasses the SDL input subsystem and passes the Android button constants straight into the native code. This means it should work with any Android supported controller in theory. Mappings are as follows:
+
+Internal/External Storage View on File Browser: L1 / R1 on 360 controller (or equivalent)
+Press button in menus: A button on 360 controller (or equivalent)
+Console D-PAD: Left analogue stick or D-PAD
+Console Button 1 + MS Start: A button on 360 controller (or equivalent)
+Console Button 2: X button on 360 controller (or equivalent)
+GG Start + MS Pause: Start button or Y button on 360 controller (or equivalent)
+
+Also note that all the menus are fully navigable by controller, and the 360 controller B button (or equivalent) will function in the same way as the 'back' touch button does on an Android device.

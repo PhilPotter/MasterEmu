@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background_colour">#5dccff</color>
+    <color name="background_search_colour">#53c2f5</color>
+    <color name="text_colour">#ffffff</color>
+    <color name="selector_colour">#808080</color>
+    <color name="text_greyed_out">#808080</color>
+    <color name="code_disabled_colour">#5dccff</color>
+    <color name="code_enabled_colour">#00bb00</color>
+    <color name="code_highlighted_enabled_colour">#c0c0c0</color>
+    <color name="code_highlighted_disabled_colour">#808080</color>
+    <color name="codes_dialogue_colour">#5dccff</color>
+</resources>
