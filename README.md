@@ -1,5 +1,5 @@
 # MasterEmu
-MasterEmu - an C-language Android-based emulator for Sega Master System and Game Gear
+MasterEmu - a C-language Android-based emulator for Sega Master System and Game Gear
 
 This is the open source project upon which all future versions of MasterEmu will be based. I've cleaned it up but erroneous comments referring to retired properietary aspects such as in-app purchases or adverts may still exist. Pull requests and contributors welcome!
 
