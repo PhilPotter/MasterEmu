@@ -124,8 +124,15 @@ public class RomData implements Serializable {
 
         // check final size
         if (romData.length < 16384 || (romData.length % 16384 != 0)) {
-            Log.e("setupRomData:", "ROM is not the correct size");
-            return;
+            if (romData.length >= 16384 && (romData.length - 512) % 16384 == 0) {
+                int newLength = romData.length - 512;
+                byte[] newRomData = new byte[newLength];
+                System.arraycopy(romData, 512, newRomData, 0, newLength);
+                romData = newRomData;
+            } else {
+                Log.e("setupRomData:", "ROM is not the correct size");
+                return;
+            }
         }
 
         // set ready
