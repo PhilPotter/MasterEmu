@@ -2,15 +2,23 @@ Programmer: Phil Potter
 
 Art/Icon Consultant: Becky Potter
 
-Testers: Phil Potter
+Testers:
+Phil Potter
 Becky Potter
 Laurence Williams
 
-Also, many thanks to unfnknblvbl from SMSPower.org for helping to test the Android TV support and finding many bugs for me to fix, and thanks to Fat32 from dsp.stackexchange.org for helping me with a problem I had with the resampling math.
+Also, many thanks to:
+unfnknblvbl from SMSPower.org for helping to test the Android TV support and finding many bugs for me to fix.
+Fat32 from dsp.stackexchange.org for helping me with a problem I had with the resampling math.
+Keith Sinclair from Chicago for helping to test the 512-byte header detection support.
 
 Codebase uses SDL and SDL_image for cross-platform purposes, as it is based upon CMasterSystem, a PC based project of Phil Potter.
 
 Please show your love and constructive feedback by e-mailing support@philpotter.co.uk - feature requests are welcome. Also, checkout the git repository at https://github.com/PhilPotter/MasterEmu and build your own copy if desired. MasterEmu is licensed under the GNU General Public License, version 3.
+
+Bug fix (3.3.1):
+
+* Modified MasterEmu to properly handle ROMs with 512-byte header at the start of their data - MasterEmu will now correctly load the ROM data from the right offset.
 
 Changelog for this release (3.3):
 
