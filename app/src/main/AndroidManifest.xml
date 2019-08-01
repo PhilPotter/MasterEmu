@@ -3,10 +3,13 @@
      com.gamemaker.game
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="uk.co.philpotter.masteremu"
-      android:versionCode="1"
-      android:versionName="3.3.1"
-      android:installLocation="auto">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="uk.co.philpotter.masteremu"
+    android:versionCode="167"
+    android:versionName="3.3.2"
+    android:minSdkVersion="19"
+    android:installLocation="auto"
+    tools:ignore="GoogleAppIndexingWarning">
 
     <uses-feature android:name="android.software.leanback"
         android:required="false"/>
