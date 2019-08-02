@@ -40,8 +40,8 @@
                 android:textColor="@color/text_colour"
                 android:textStyle="bold"
                 android:textSize="18sp"
-                android:text="Donate to help MasterEmu"
-                android:id="@+id/extras_donate_button"
+                android:text="Visit PotterSoft Website"
+                android:id="@+id/extras_website_button"
                 android:padding="5sp"
                 android:background="@drawable/view_border"
                 android:gravity="center"/>

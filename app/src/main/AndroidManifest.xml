@@ -5,8 +5,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="uk.co.philpotter.masteremu"
-    android:versionCode="167"
-    android:versionName="3.3.2"
+    android:versionCode="168"
+    android:versionName="3.3.3"
     android:minSdkVersion="19"
     android:installLocation="auto"
     tools:ignore="GoogleAppIndexingWarning">

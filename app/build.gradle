@@ -8,8 +8,8 @@ android {
         applicationId "uk.co.philpotter.masteremu"
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 167
-        versionName "3.3.2"
+        versionCode 168
+        versionName "3.3.3"
         ndk {
             moduleName "SDL2"
             moduleName "SDL2_image"

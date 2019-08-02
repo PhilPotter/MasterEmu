@@ -67,22 +67,22 @@ public class ExtrasActivity extends Activity {
         extrasView.setText(extrasText);
 
         ButtonColourListener bcl = new ButtonColourListener();
-        ControllerTextView extras_donate_button = (ControllerTextView)findViewById(R.id.extras_donate_button);
-        extras_donate_button.setOnTouchListener(bcl);
+        ControllerTextView extras_website_button = (ControllerTextView)findViewById(R.id.extras_website_button);
+        extras_website_button.setOnTouchListener(bcl);
         ControllerTextView extras_source_button = (ControllerTextView)findViewById(R.id.extras_source_button);
         extras_source_button.setOnTouchListener(bcl);
 
         // Set all buttons to same width
         int longest = 0;
-        extras_donate_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        extras_website_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         extras_source_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        if (extras_donate_button.getMeasuredWidth() > longest)
-            longest = extras_donate_button.getMeasuredWidth();
+        if (extras_website_button.getMeasuredWidth() > longest)
+            longest = extras_website_button.getMeasuredWidth();
         if (extras_source_button.getMeasuredWidth() > longest)
             longest = extras_source_button.getMeasuredWidth();
 
-        extras_donate_button.setLayoutParams(new LinearLayout.LayoutParams(longest, extras_donate_button.getMeasuredHeight()));
-        extras_source_button.setLayoutParams(new LinearLayout.LayoutParams(longest, extras_donate_button.getMeasuredHeight()));
+        extras_website_button.setLayoutParams(new LinearLayout.LayoutParams(longest, extras_website_button.getMeasuredHeight()));
+        extras_source_button.setLayoutParams(new LinearLayout.LayoutParams(longest, extras_website_button.getMeasuredHeight()));
 
         // Load drawables for donate button
         Drawable light = null;
@@ -102,20 +102,20 @@ public class ExtrasActivity extends Activity {
             dark = getResources().getDrawable(R.drawable.view_greyed_out_border, null);
             light = getResources().getDrawable(R.drawable.view_border, null);
         }
-        extras_donate_button.setActiveDrawable(dark);
-        extras_donate_button.setInactiveDrawable(light);
-        extras_donate_button.setHighlightedTextColour(darkText);
-        extras_donate_button.setUnhighlightedTextColour(lightText);
+        extras_website_button.setActiveDrawable(dark);
+        extras_website_button.setInactiveDrawable(light);
+        extras_website_button.setHighlightedTextColour(darkText);
+        extras_website_button.setUnhighlightedTextColour(lightText);
         extras_source_button.setActiveDrawable(dark);
         extras_source_button.setInactiveDrawable(light);
         extras_source_button.setHighlightedTextColour(darkText);
         extras_source_button.setUnhighlightedTextColour(lightText);
 
         // Setup button intents and make sure to add extra info to do the right thing
-        Intent donate_intent = new Intent(Intent.ACTION_VIEW);
-        String donate_url = getResources().getString(R.string.buy_me_a_coffee_url);
-        donate_intent.setData(Uri.parse(donate_url));
-        extras_donate_button.setIntent(donate_intent);
+        Intent pottersoft_intent = new Intent(Intent.ACTION_VIEW);
+        String pottersoft_url = getResources().getString(R.string.pottersoft_url);
+        pottersoft_intent.setData(Uri.parse(pottersoft_url));
+        extras_website_button.setIntent(pottersoft_intent);
         Intent source_intent = new Intent(Intent.ACTION_VIEW);
         String source_url = getResources().getString(R.string.github_url);
         source_intent.setData(Uri.parse(source_url));
@@ -123,7 +123,7 @@ public class ExtrasActivity extends Activity {
 
         // Create selection object and add mappings to it.
         selectionObj = new ControllerSelection();
-        selectionObj.addMapping(extras_donate_button);
+        selectionObj.addMapping(extras_website_button);
         selectionObj.addMapping(extras_source_button);
 
         // Set focus
