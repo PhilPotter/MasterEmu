@@ -103,6 +103,7 @@ typedef struct EmuBundle EmuBundle;
 #define KEYCODE_Z 54
 #define KEYCODE_X 52
 #define KEYCODE_ENTER 66
+#define KEYCODE_BACK 4
 #define ACTION_PAINT 1337
 #define ACTION_DOWN 1338
 #define ACTION_UP 1339
@@ -115,7 +116,7 @@ emubool util_isPalOnlyROM(emuint checksum); /* this tells us if the ROM is PAL o
 emubool util_isSmsGgROM(emuint checksum); /* this tells us if the Game Gear ROM is to run in Master System mode */
 emubool util_handleQuit(EmulatorContainer *ec, emubyte action); /* this lets us manipulate the quit variable atomically */
 void util_paintFrame(EmuBundle *eb); /* this paints one frame for us */
-EmulatorContainer *util_loadRom(EmulatorContainer *ec, emubyte *romData, emuint romSize); /* this loads the ROM from its file */
+EmulatorContainer *util_loadRom(EmulatorContainer *ec, signed_emubyte *romData, emuint romSize); /* this loads the ROM from its file */
 void util_handleWindowResize(EmuBundle *eb, SDL_Collection s); /* this deals with window resizing */
 void util_dealWithTouch(EmulatorContainer *ec, SDL_Collection s, SDL_Event *event); /* this deals with touch events */
 emuint util_saveState(EmulatorContainer *ec, char *fileName); /* this saves the state of the emulator to a file */

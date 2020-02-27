@@ -16,6 +16,10 @@ Codebase uses SDL and SDL_image for cross-platform purposes, as it is based upon
 
 Please show your love and constructive feedback by e-mailing support@philpotter.co.uk - feature requests are welcome. Also, checkout the git repository at https://github.com/PhilPotter/MasterEmu and build your own copy if desired. MasterEmu is licensed under the GNU General Public License, version 3.
 
+Update (3.3.4):
+
+* Modified gradle config slightly and added fix for Android TV remotes.
+
 Update (3.3.3):
 
 * Removed donation button and replaced with a button to go to my website.

@@ -63,6 +63,7 @@ public class TitlescreenActivity extends Activity {
     /**
      * This method creates the titlescreen.
      */
+    @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

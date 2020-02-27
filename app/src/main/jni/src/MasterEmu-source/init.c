@@ -305,7 +305,7 @@ static int MasterEmuEventFilter(void *userdata, SDL_Event *event) {
         if ((*event).user.code == ACTION_DOWN || (*event).user.code == ACTION_UP) {
 
             signed_emuint keycode = (signed_emuint)((*event).user.data1);
-            if ((*event).user.code == ACTION_UP && keycode == KEYCODE_BUTTON_B) {
+            if ((*event).user.code == ACTION_UP && (keycode == KEYCODE_BUTTON_B || keycode == KEYCODE_BACK)) {
                 returnVal = 0;
                 JNIEnv *env = (JNIEnv*)SDL_AndroidGetJNIEnv();
                 jobject obj = (jobject)SDL_AndroidGetActivity();
@@ -480,7 +480,11 @@ JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_SDLActivity_onMasterEmuDo
     SDL_Event event;
     memset((void *)&event, 0, sizeof(event));
     event.user.code = ACTION_DOWN;
-    event.user.data1 = (void *)keycode;
+
+    /* this gets rid of compiler warnings about casting from jint to void * */
+    jlong lKeycode = keycode;
+
+    event.user.data1 = (void *)lKeycode;
     event.user.data2 = NULL;
     event.type = copyOfUserEventCode;
     SDL_PushEvent(&event);
@@ -494,7 +498,11 @@ JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_SDLActivity_onMasterEmuUp
     SDL_Event event;
     memset((void *)&event, 0, sizeof(event));
     event.user.code = ACTION_UP;
-    event.user.data1 = (void *)keycode;
+
+    /* this gets rid of compiler warnings about casting from jint to void * */
+    jlong lKeycode = keycode;
+
+    event.user.data1 = (void *)lKeycode;
     event.user.data2 = NULL;
     event.type = copyOfUserEventCode;
     SDL_PushEvent(&event);

@@ -37,6 +37,7 @@ public class ManageStatesActivity extends Activity {
     /**
      * This method creates the manage states screen.
      */
+    @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

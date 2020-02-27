@@ -105,6 +105,7 @@ public class FileBrowser extends Activity {
     /**
      * This method creates the layout (header + file grid).
      */
+    @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

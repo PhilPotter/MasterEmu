@@ -540,7 +540,7 @@ void util_paintFrame(EmuBundle *eb)
 }
 
 /* this function loads the ROM file */
-EmulatorContainer *util_loadRom(EmulatorContainer *ec, emubyte *romData, emuint romSize)
+EmulatorContainer *util_loadRom(EmulatorContainer *ec, signed_emubyte *romData, emuint romSize)
 {
     /* allocate appropriate memory for romData and copy data from romData */
     if ((ec->romData = malloc((size_t)romSize)) == NULL) {
@@ -707,15 +707,15 @@ void util_dealWithTouch(EmulatorContainer *ec, SDL_Collection s, SDL_Event *even
                                  float buttonTwoRadius = buttonOneRadius;
 
                                  /* button one calculation */
-                                 signed_emuint tempX = abs(x - buttonOneX);
-                                 signed_emuint tempY = abs(y - buttonOneY);
+                                 signed_emuint tempX = abs((int)(x - buttonOneX));
+                                 signed_emuint tempY = abs((int)(y - buttonOneY));
                                  tempX = tempX * tempX;
                                  tempY = tempY * tempY;
                                  float distanceToButtonOne = sqrtf((float)(tempX + tempY));
 
                                  /* button two calculation */
-                                 tempX = abs(x - buttonTwoX);
-                                 tempY = abs(y - buttonTwoY);
+                                 tempX = abs((int)(x - buttonTwoX));
+                                 tempY = abs((int)(y - buttonTwoY));
                                  tempX = tempX * tempX;
                                  tempY = tempY * tempY;
                                  float distanceToButtonTwo = sqrtf((float)(tempX + tempY));
@@ -840,15 +840,15 @@ void util_dealWithTouch(EmulatorContainer *ec, SDL_Collection s, SDL_Event *even
                                    float buttonTwoRadius = buttonOneRadius;
 
                                    /* button one calculation */
-                                   signed_emuint tempX = abs(x - buttonOneX);
-                                   signed_emuint tempY = abs(y - buttonOneY);
+                                   signed_emuint tempX = abs((int)(x - buttonOneX));
+                                   signed_emuint tempY = abs((int)(y - buttonOneY));
                                    tempX = tempX * tempX;
                                    tempY = tempY * tempY;
                                    float distanceToButtonOne = sqrtf((float)(tempX + tempY));
 
                                    /* button two calculation */
-                                   tempX = abs(x - buttonTwoX);
-                                   tempY = abs(y - buttonTwoY);
+                                   tempX = abs((int)(x - buttonTwoX));
+                                   tempY = abs((int)(y - buttonTwoY));
                                    tempX = tempX * tempX;
                                    tempY = tempY * tempY;
                                    float distanceToButtonTwo = sqrtf((float)(tempX + tempY));
@@ -972,15 +972,15 @@ void util_dealWithTouch(EmulatorContainer *ec, SDL_Collection s, SDL_Event *even
                                        float buttonTwoRadius = buttonOneRadius;
 
                                        /* button one calculation */
-                                       signed_emuint tempX = abs(x - buttonOneX);
-                                       signed_emuint tempY = abs(y - buttonOneY);
+                                       signed_emuint tempX = abs((int)(x - buttonOneX));
+                                       signed_emuint tempY = abs((int)(y - buttonOneY));
                                        tempX = tempX * tempX;
                                        tempY = tempY * tempY;
                                        float distanceToButtonOne = sqrtf((float)(tempX + tempY));
 
                                        /* button two calculation */
-                                       tempX = abs(x - buttonTwoX);
-                                       tempY = abs(y - buttonTwoY);
+                                       tempX = abs((int)(x - buttonTwoX));
+                                       tempY = abs((int)(y - buttonTwoY));
                                        tempX = tempX * tempX;
                                        tempY = tempY * tempY;
                                        float distanceToButtonTwo = sqrtf((float)(tempX + tempY));

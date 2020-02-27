@@ -34,6 +34,7 @@ public class ExtrasActivity extends Activity {
     /**
      * This method creates the extras screen.
      */
+    @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

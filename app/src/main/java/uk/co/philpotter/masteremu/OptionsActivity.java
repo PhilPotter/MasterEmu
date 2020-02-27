@@ -35,6 +35,7 @@ public class OptionsActivity extends Activity {
     /**
      * This method creates the options screen.
      */
+    @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

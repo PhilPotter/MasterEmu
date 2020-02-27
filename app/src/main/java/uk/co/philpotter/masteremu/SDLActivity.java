@@ -389,11 +389,11 @@ public class SDLActivity extends Activity {
             keyCode == KeyEvent.KEYCODE_ZOOM_OUT /* API 11 */
             ) {
             return false;
-        } else if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode != KeyEvent.KEYCODE_BACK) {
+        } else if (event.getAction() == KeyEvent.ACTION_DOWN) {
             SDLActivity.onMasterEmuDown(keyCode);
             return true;
         }
-        else if (event.getAction() == KeyEvent.ACTION_UP && keyCode != KeyEvent.KEYCODE_BACK) {
+        else if (event.getAction() == KeyEvent.ACTION_UP) {
             //Log.v("SDL", "key up: " + keyCode);
             SDLActivity.onMasterEmuUp(keyCode);
             return true;
