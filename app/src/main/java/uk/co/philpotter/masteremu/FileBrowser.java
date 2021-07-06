@@ -913,6 +913,14 @@ public class FileBrowser extends Activity {
             }
         }
     }
+  public static String zerosToDate(int time, int length) {
+      
+    String paddedString = String.valueOf(time);
+      while (paddedString.length() < length) {
+         paddedString = "0" + paddedString;
+      }
+      return paddedString;
+   }
 
     /**
      * This is the listener which handles exporting of states.
@@ -924,24 +932,8 @@ public class FileBrowser extends Activity {
                 case DialogInterface.BUTTON_POSITIVE:
                     // import files with StateIO class
                     StateIO manager = new StateIO();
-                    Date currentDate = new Date();
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(currentDate);
-                    StringBuilder saveStateFileName = new StringBuilder();
-                    saveStateFileName.append("MasterEmu_StateExport_");
-                    saveStateFileName.append(cal.get(Calendar.YEAR));
-                    saveStateFileName.append('-');
-                    saveStateFileName.append(cal.get(Calendar.MONTH) + 1);
-                    saveStateFileName.append('-');
-                    saveStateFileName.append(cal.get(Calendar.DAY_OF_MONTH));
-                    saveStateFileName.append('_');
-                    saveStateFileName.append(cal.get(Calendar.HOUR_OF_DAY));
-                    saveStateFileName.append('-');
-                    saveStateFileName.append(cal.get(Calendar.MINUTE));
-                    saveStateFileName.append('-');
-                    saveStateFileName.append(cal.get(Calendar.SECOND));
-                    saveStateFileName.append(".zip");
-                    boolean result = manager.exportToZip(getFilesDir().getAbsolutePath(), FileBrowser.this.currentPath + "/" + saveStateFileName.toString());
+                    String strSaveStateFileName = EmuUtils.fileNameWithDateTime("MasterEmu_StateExport_",".zip");                    
+                    boolean result = manager.exportToZip(getFilesDir().getAbsolutePath(), FileBrowser.this.currentPath + "/" + strSaveStateFileName);
 
                     // check success/failure
                     if (result) {
