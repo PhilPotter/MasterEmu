@@ -221,24 +221,9 @@ public class PauseActivity extends Activity {
             long higherAddress = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE").getInt("higherAddress");
             long emulatorContainerPointer = ((0xFFFFFFFF00000000L & (higherAddress << 32)) | (0xFFFFFFFFL & lowerAddress));
 
-            Date currentDate = new Date();
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(currentDate);
-            StringBuilder saveStateFileName = new StringBuilder();
-            saveStateFileName.append(cal.get(Calendar.YEAR));
-            saveStateFileName.append('-');
-            saveStateFileName.append(cal.get(Calendar.MONTH) + 1);
-            saveStateFileName.append('-');
-            saveStateFileName.append(cal.get(Calendar.DAY_OF_MONTH));
-            saveStateFileName.append('_');
-            saveStateFileName.append(cal.get(Calendar.HOUR_OF_DAY));
-            saveStateFileName.append('-');
-            saveStateFileName.append(cal.get(Calendar.MINUTE));
-            saveStateFileName.append('-');
-            saveStateFileName.append(cal.get(Calendar.SECOND));
-            saveStateFileName.append(".mesav");
+            String strSaveStateFileName = EmuUtils.fileNameWithDateTime(".mesav");                    
 
-            saveStateStub(emulatorContainerPointer, saveStateFileName.toString());
+            saveStateStub(emulatorContainerPointer, strSaveStateFileName);
         } else if (v.getId() == R.id.pause_exit_button) {
             long lowerAddress = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE").getInt("lowerAddress");
             long higherAddress = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE").getInt("higherAddress");
