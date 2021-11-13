@@ -1,5 +1,8 @@
 package uk.co.philpotter.masteremu;
 
+import java.util.Date;
+import java.util.Calendar;
+
 /**
  * This class has some functions used in several parts of this project
  */
