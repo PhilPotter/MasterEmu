@@ -913,14 +913,14 @@ public class FileBrowser extends Activity {
             }
         }
     }
-  public static String zerosToDate(int time, int length) {
-      
-    String paddedString = String.valueOf(time);
-      while (paddedString.length() < length) {
-         paddedString = "0" + paddedString;
-      }
-      return paddedString;
-   }
+
+    public static String zerosToDate(int time, int length) {
+        String paddedString = String.valueOf(time);
+        while (paddedString.length() < length) {
+            paddedString = "0" + paddedString;
+        }
+        return paddedString;
+    }
 
     /**
      * This is the listener which handles exporting of states.
@@ -932,7 +932,7 @@ public class FileBrowser extends Activity {
                 case DialogInterface.BUTTON_POSITIVE:
                     // import files with StateIO class
                     StateIO manager = new StateIO();
-                    String strSaveStateFileName = EmuUtils.fileNameWithDateTime("MasterEmu_StateExport_",".zip");                    
+                    String strSaveStateFileName = EmuUtils.fileNameWithDateTime("MasterEmu_StateExport_", ".zip");                    
                     boolean result = manager.exportToZip(getFilesDir().getAbsolutePath(), FileBrowser.this.currentPath + "/" + strSaveStateFileName);
 
                     // check success/failure
