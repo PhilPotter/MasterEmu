@@ -3,7 +3,7 @@
 
 #ifndef VDP_INCLUDE
 #define VDP_INCLUDE
-#include "../../SDL/include/SDL.h"
+#include "../../SDL2-2.0.16/include/SDL.h"
 #include "datatypes.h"
 #include "console.h"
 

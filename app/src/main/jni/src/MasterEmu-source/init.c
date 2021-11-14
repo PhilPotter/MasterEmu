@@ -7,7 +7,7 @@
 #include <android/log.h>
 #include <time.h>
 #include "init.h"
-#include "../../SDL/include/SDL.h"
+#include "../../SDL2-2.0.16/include/SDL.h"
 #include "console.h"
 #include "crc32_imp.h"
 #include "util.h"
@@ -20,8 +20,8 @@ static void startLogicThread(EmuBundle *eb);
 JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_saveStateStub(JNIEnv *, jobject, jlong, jstring);
 JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_StateBrowser_loadStateStub(JNIEnv *, jobject, jlong, jstring);
 JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_quitStub(JNIEnv *, jobject, jlong);
-JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_SDLActivity_onMasterEmuDown(JNIEnv *, jclass, jint);
-JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_SDLActivity_onMasterEmuUp(JNIEnv *, jclass, jint);
+JNIEXPORT void JNICALL Java_org_libsdl_app_SDLActivity_onMasterEmuDown(JNIEnv *, jclass, jint);
+JNIEXPORT void JNICALL Java_org_libsdl_app_SDLActivity_onMasterEmuUp(JNIEnv *, jclass, jint);
 
 /* global cheat code array objects */
 ArCheatArray arCheatArray;
@@ -227,10 +227,12 @@ int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jin
     /* paint loop */
     SDL_Event e;
     signed_emuint waitStatus = 0;
-    while (!util_handleQuit(&ec, 0) && (waitStatus = SDL_WaitEvent(&e))) {
+    while ((waitStatus = SDL_WaitEvent(&e))) {
         if (e.type == eb.userEventType) {
             if (e.user.code == ACTION_PAINT)
                 util_paintFrame((EmuBundle *)e.user.data1);
+            else if (e.user.code == MASTEREMU_QUIT)
+                break;
         }
     }
 
@@ -316,7 +318,7 @@ static int MasterEmuEventFilter(void *userdata, SDL_Event *event) {
                 jmethodID mid = (*env)->GetMethodID(env, SDLActivity_class, "loadPauseMenu", "(JLjava/lang/String;)V");
                 char checksumStr[9];
                 if (sprintf(checksumStr, "%08x", (*ec).romChecksum) < 0) {
-                    __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't convert ROM checksum to string...");
+                    __android_log_print(ANDROID_LOG_ERROR, "init.c", "Couldn't convert ROM checksum to string...");
                 }
                 jstring statePath = (*env)->NewStringUTF(env, checksumStr);
                 (*env)->CallVoidMethod(env, obj, mid, (jlong)ec, statePath);
@@ -343,7 +345,7 @@ static int MasterEmuEventFilter(void *userdata, SDL_Event *event) {
         returnVal = 0;
     } else if ((*event).type == SDL_APP_TERMINATING) {
         /* terminate app here */
-        util_handleQuit(ec, 1);
+        util_handleQuit(copyOfUserEventCode);
         returnVal = 0;
     } else if ((*event).type == SDL_QUIT) {
         /* ignore this event */
@@ -468,12 +470,12 @@ JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_quitStub(JN
     /* cast pointer back */
     EmulatorContainer *ec = (EmulatorContainer *)emulatorContainerPointer;
 
-    /* set quit to true */
-    util_handleQuit(ec, 1);
+    /* quit emulator event loop */
+    util_handleQuit(copyOfUserEventCode);
 }
 
 /* this function handles controller input when a button goes down */
-JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_SDLActivity_onMasterEmuDown(JNIEnv *env, jclass cls, jint keycode)
+JNIEXPORT void JNICALL Java_org_libsdl_app_SDLActivity_onMasterEmuDown(JNIEnv *env, jclass cls, jint keycode)
 {
     /* define user event for updating display on main thread, and push it
        to event queue for processing */
@@ -491,7 +493,7 @@ JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_SDLActivity_onMasterEmuDo
 }
 
 /* this function handles controller input when a button goes up */
-JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_SDLActivity_onMasterEmuUp(JNIEnv *env, jclass cls, jint keycode)
+JNIEXPORT void JNICALL Java_org_libsdl_app_SDLActivity_onMasterEmuUp(JNIEnv *env, jclass cls, jint keycode)
 {
     /* define user event for updating display on main thread, and push it
        to event queue for processing */

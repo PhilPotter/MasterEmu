@@ -34,14 +34,12 @@ import android.widget.AdapterView;
 import java.io.IOException;
 import android.util.Log;
 
-import java.util.Calendar;
 import java.util.Collections;
 import android.graphics.drawable.Drawable;
 import android.widget.Toast;
 import java.io.RandomAccessFile;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.util.Date;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.CRC32;
@@ -51,6 +49,8 @@ import android.Manifest;
 import androidx.core.content.ContextCompat;
 import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
+
+import org.libsdl.app.SDLActivity;
 
 /**
  * This class implements a file browser to allow the user

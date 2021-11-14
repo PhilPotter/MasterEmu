@@ -9,7 +9,7 @@
 #include "crc32_imp.h"
 #include "util.h"
 #include "init.h"
-#include "../../SDL2_image-2.0.3/SDL_image.h"
+#include "../../SDL2_image-2.0.5/SDL_image.h"
 
 /* this function deals with setting up SDL and initialising all needed structures */
 SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool largerButtons, JNIEnv *env, jclass cls, jobject obj, emubool fromResume)
@@ -1090,20 +1090,15 @@ void util_dealWithTouch(EmulatorContainer *ec, SDL_Collection s, SDL_Event *even
 
 }
 
-/* this function atomically sets or gets the quitVar variable */
-emubool util_handleQuit(EmulatorContainer *ec, emubyte action)
+/* this function sends an event which quits the emulator */
+void util_handleQuit(emuint userEventCode)
 {
-    /* define variables */
-    emubool success = false;
-
-    /* act upon specified action */
-    switch (action) {
-        case 0: success = (SDL_AtomicGet(&ec->quitVar) == 1); break;
-        case 1: SDL_AtomicSet(&ec->quitVar, 1); break;
-    }
-
-    /* return the value of the quit variable */
-    return success;
+    /* define user event for quitting the event loop */
+    SDL_Event event;
+    memset((void *)&event, 0, sizeof(event));
+    event.user.code = MASTEREMU_QUIT;
+    event.type = userEventCode;
+    SDL_PushEvent(&event);
 }
 
 /* this function deals with resize events and is called from init.c when no other thread is running */

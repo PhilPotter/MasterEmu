@@ -4,7 +4,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := MasterEmu
 
-SDL_PATH := ../SDL
+SDL_PATH := ../SDL2-2.0.16
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include
 

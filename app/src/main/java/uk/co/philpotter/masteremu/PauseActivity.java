@@ -15,10 +15,10 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.view.KeyEvent;
 import android.widget.Toast;
-import java.util.Date;
-import java.util.Calendar;
 import android.view.InputDevice;
 import android.util.Log;
+
+import org.libsdl.app.SDLActivity;
 
 /**
  * This class acts as the pause screen of the app.
@@ -32,8 +32,13 @@ public class PauseActivity extends Activity {
 
     // native methods to call
     public native void saveStateStub(long emulatorContainerPointer, String fileName);
-    public native void quitStub(long emulatorContainerPointer);
     public native void resizeAndAudioStub(long emulatorContainerPointer);
+    public native void quitStub(long emulatorContainerPointer);
+
+    public void quitEmulator(long emulatorContainerPointer) {
+        quitStub(emulatorContainerPointer);
+        SDLActivity.mSingleton.finish();
+    }
 
     /**
      * This method sets the screen orientation when locked.
@@ -55,7 +60,7 @@ public class PauseActivity extends Activity {
         long lowerAddress = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE").getInt("lowerAddress");
         long higherAddress = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE").getInt("higherAddress");
         long emulatorContainerPointer = ((0xFFFFFFFF00000000L & (higherAddress << 32)) | (0xFFFFFFFFL & lowerAddress));
-        quitStub(emulatorContainerPointer);
+        quitEmulator(emulatorContainerPointer);
         try {
             Thread.sleep(PauseActivity.sleepTime);
         } catch (Exception e) {
@@ -207,10 +212,7 @@ public class PauseActivity extends Activity {
     public void handleButton(View v) {
         // This is where we deal with the button presses.
         if (v.getId() == R.id.pause_resume_button) {
-            long lowerAddress = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE").getInt("lowerAddress");
-            long higherAddress = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE").getInt("higherAddress");
-            long emulatorContainerPointer = ((0xFFFFFFFF00000000L & (higherAddress << 32)) | (0xFFFFFFFFL & lowerAddress));
-            PauseActivity.this.finish();
+            finish();
         } else if (v.getId() == R.id.pause_loadstate_button) {
             Intent loadStateIntent = new Intent(PauseActivity.this, StateBrowser.class);
             Bundle b = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE");
@@ -228,7 +230,7 @@ public class PauseActivity extends Activity {
             long lowerAddress = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE").getInt("lowerAddress");
             long higherAddress = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE").getInt("higherAddress");
             long emulatorContainerPointer = ((0xFFFFFFFF00000000L & (higherAddress << 32)) | (0xFFFFFFFFL & lowerAddress));
-            quitStub(emulatorContainerPointer);
+            quitEmulator(emulatorContainerPointer);
             try {
                 Thread.sleep(PauseActivity.sleepTime);
             } catch (Exception e) {
@@ -269,7 +271,7 @@ public class PauseActivity extends Activity {
                 long lowerAddress = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE").getInt("lowerAddress");
                 long higherAddress = PauseActivity.this.getIntent().getBundleExtra("MAIN_BUNDLE").getInt("higherAddress");
                 long emulatorContainerPointer = ((0xFFFFFFFF00000000L & (higherAddress << 32)) | (0xFFFFFFFFL & lowerAddress));
-                quitStub(emulatorContainerPointer);
+                quitEmulator(emulatorContainerPointer);
                 try {
                     Thread.sleep(PauseActivity.sleepTime);
                 } catch (Exception e) {

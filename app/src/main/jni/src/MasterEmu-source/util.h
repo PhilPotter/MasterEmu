@@ -5,7 +5,7 @@
 #define UTIL_INCLUDE
 #include <stdio.h>
 #include <jni.h>
-#include "../../SDL/include/SDL.h"
+#include "../../SDL2-2.0.16/include/SDL.h"
 #include "datatypes.h"
 
 #define LARGER_BUTTONS_FACTOR 1.3
@@ -107,6 +107,7 @@ typedef struct EmuBundle EmuBundle;
 #define ACTION_PAINT 1337
 #define ACTION_DOWN 1338
 #define ACTION_UP 1339
+#define MASTEREMU_QUIT 1340
 
 /* function declarations */
 SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool largerButtons, JNIEnv *env, jclass cls, jobject obj, emubool fromResume); /* this sets up SDL */
@@ -114,7 +115,7 @@ void util_shutdownSDL(SDL_Collection s, emubool fromResume); /* this shuts down 
 emubool util_isCodemastersROM(emuint checksum); /* this tells whether the ROM uses a Codemasters mapper */
 emubool util_isPalOnlyROM(emuint checksum); /* this tells us if the ROM is PAL only */
 emubool util_isSmsGgROM(emuint checksum); /* this tells us if the Game Gear ROM is to run in Master System mode */
-emubool util_handleQuit(EmulatorContainer *ec, emubyte action); /* this lets us manipulate the quit variable atomically */
+void util_handleQuit(emuint userEventCode); /* this lets us quit the emulator */
 void util_paintFrame(EmuBundle *eb); /* this paints one frame for us */
 EmulatorContainer *util_loadRom(EmulatorContainer *ec, signed_emubyte *romData, emuint romSize); /* this loads the ROM from its file */
 void util_handleWindowResize(EmuBundle *eb, SDL_Collection s); /* this deals with window resizing */

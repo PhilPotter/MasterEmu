@@ -10,7 +10,6 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.Spanned;
-import android.util.Log;
 import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -36,6 +35,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+
+import org.libsdl.app.SDLActivity;
 
 /**
  * This class loads cheats and then initiates the SDLActivity in place of FileBrowser.

@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 #include <android/log.h>
-#include "../../SDL/include/SDL.h"
+#include "../../SDL2-2.0.16/include/SDL.h"
 #include "console.h"
 #include "controllers.h"
 

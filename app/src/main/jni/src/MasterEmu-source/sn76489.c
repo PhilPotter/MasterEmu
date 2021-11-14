@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <android/log.h>
-#include "../../SDL/include/SDL.h"
+#include "../../SDL2-2.0.16/include/SDL.h"
 #include "sn76489.h"
 
 #define PAL_SIZE 4422
