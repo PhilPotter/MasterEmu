@@ -99,24 +99,24 @@ public class StateBrowser extends Activity {
      * and populates the grid with them.
      */
     public void populateStateList(String path) {
-        EmuFile filesDir = new EmuFile(this.getFilesDir() + "/" + path);
+        File filesDir = new File(this.getFilesDir() + "/" + path);
         File[] tempFileArray = filesDir.listFiles();
-        EmuFile[] tempEmuFileArray = new EmuFile[tempFileArray.length];
+        File[] tempCanonicalFileArray = new File[tempFileArray.length];
         for (int i = 0; i < tempFileArray.length; ++i) {
             try {
-                tempEmuFileArray[i] = new EmuFile(tempFileArray[i].getCanonicalPath());
+                tempCanonicalFileArray[i] = new File(tempFileArray[i].getCanonicalPath());
             }
             catch (IOException e) {
                 Log.e("populateStateList:", "Couldn't get canonical path");
                 System.exit(0);
             }
         }
-        ArrayList<EmuFile> tempList = new ArrayList<EmuFile>();
+        ArrayList<File> tempList = new ArrayList();
 
-        for (int i = 0; i < tempEmuFileArray.length; ++i) {
-            if (tempEmuFileArray[i].getName().toLowerCase().endsWith(".mesav") &&
-                    !tempEmuFileArray[i].getName().toLowerCase().equals("current_state.mesav")) {
-                tempList.add(tempEmuFileArray[i]);
+        for (int i = 0; i < tempCanonicalFileArray.length; ++i) {
+            if (tempCanonicalFileArray[i].getName().toLowerCase().endsWith(".mesav") &&
+                    !tempCanonicalFileArray[i].getName().toLowerCase().equals("current_state.mesav")) {
+                tempList.add(tempCanonicalFileArray[i]);
             }
         }
 
@@ -126,7 +126,7 @@ public class StateBrowser extends Activity {
             TextView no_states_view = (TextView)findViewById(R.id.no_states_view);
             no_states_view.setText("No save states in this folder");
         } else {
-            ListView lv = (ListView) findViewById(R.id.statelist);
+            ListView lv = (ListView)findViewById(R.id.statelist);
             lv.setAdapter(new FilesystemAdapter(this, tempList.toArray()));
         }
     }

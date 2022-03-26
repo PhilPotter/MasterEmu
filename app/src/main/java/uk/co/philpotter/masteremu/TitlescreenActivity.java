@@ -3,9 +3,13 @@
 
 package uk.co.philpotter.masteremu;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,11 +21,19 @@ import android.view.InputDevice;
 import java.io.File;
 import java.io.IOException;
 import android.util.Log;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 /**
  * This class acts as the titlescreen of the app.
  */
-public class TitlescreenActivity extends Activity {
+public class TitlescreenActivity extends Activity implements ActivityCompat.OnRequestPermissionsResultCallback {
+
+    // Bluetooth permissions request
+    private static final int BLUETOOTH_CONNECT_REQUEST = 0;
 
     // define instance variables
     private ControllerSelection selectionObj;
@@ -67,6 +79,14 @@ public class TitlescreenActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Ask for Bluetooth permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+                != PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.BLUETOOTH_CONNECT},
+                    BLUETOOTH_CONNECT_REQUEST);
+        }
 
         try {
             Runtime.getRuntime().loadLibrary("SDL2");
@@ -315,4 +335,37 @@ public class TitlescreenActivity extends Activity {
         }
     }
 
+    /**
+     * This callback should be called when permissions requests have been handled. We use it
+     * primarily for crapping out if bluetooth is rejected, as SDL needs it for game controller
+     * support in a lot of instances.
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        System.out.println("CALLED!!!!\n");
+        for (int i = 0; i < permissions.length; i++) {
+            if (permissions[i].equals(Manifest.permission.BLUETOOTH_CONNECT)) {
+                // Bluetooth permission request - check if it was approved or not
+                if (grantResults[i] != PERMISSION_GRANTED) {
+                    // Permission check failed, exist app
+                    showMessage("Bluetooth permission required for game controllers in SDL");
+                    finish();
+                }
+            }
+        }
+    }
+
+    /**
+     * This shows a message.
+     * @param message
+     */
+    public void showMessage(String message) {
+        Toast messageToast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+        messageToast.show();
+    }
 }

@@ -8,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipEntry;
@@ -25,26 +27,14 @@ public class StateIO {
     };
 
     /**
-     * This method attempts to export all save states + folders to a new zip file at
-     * the location specified by pathname.
+     * This method attempts to export all save states + folders to a new zip file referenced
+     * by the supplied output stream.
      * @param base
-     * @param pathname
+     * @param exportFileStream
      */
-    public boolean exportToZip(String base, String pathname) {
-        FileOutputStream fos = null;
-        File f = new File(pathname);
-
-        // open output stream to file
-        try {
-            fos = new FileOutputStream(f);
-        }
-        catch (Exception e) {
-            System.err.println("Couldn't open file output stream to zip file...");
-            return false;
-        }
-
-        // wrap this with a zip output stream
-        ZipOutputStream zos = new ZipOutputStream(fos);
+    public boolean exportToZip(String base, OutputStream exportFileStream) {
+        // wrap output stream with a zip output stream
+        ZipOutputStream zos = new ZipOutputStream(exportFileStream);
 
         // create file to represent base dir
         File baseDir = new File(base);
@@ -62,7 +52,7 @@ public class StateIO {
         }
         catch (Exception e) {
             System.err.println("Couldn't write header file to zip file...");
-            errorCleanup(f, zos);
+            errorCleanup(zos);
             return false;
         }
 
@@ -75,7 +65,7 @@ public class StateIO {
             }
             catch (Exception e) {
                 System.err.println("Couldn't create zip entry for directory " + stateFolders[i].getName() + "...");
-                errorCleanup(f, zos);
+                errorCleanup(zos);
                 return false;
             }
 
@@ -98,19 +88,18 @@ public class StateIO {
                 }
                 catch (Exception e) {
                     System.err.println("Couldn't write state file " + stateFiles[j].getName() + " to zip file...");
-                    errorCleanup(f, zos);
+                    errorCleanup(zos);
                     return false;
                 }
             }
         }
 
-        // close zip file
+        // close zip stream
         try {
             zos.close();
         }
         catch (Exception e) {
             System.err.println("Couldn't close zip file...");
-            f.delete();
             return false;
         }
 
@@ -118,28 +107,14 @@ public class StateIO {
     }
 
     /**
-     * This method attempts to import all save states + folders from a zip file at
-     * the location specified by pathname.
+     * This method attempts to import all save states + folders from a zip file referenced
+     * by the supplied input stream.
      * @param base
      * @param pathname
      */
-    public boolean importFromZip(String base, String pathname) {
-        // create File referring to our supplied pathname
-        File saveStateArchive = new File(pathname);
-        if (!saveStateArchive.exists()) {
-            System.err.println("Supplied file pathname doesn't exist...");
-            return false;
-        }
-
-        // get zip input stream from file
-        ZipInputStream zis = null;
-        try {
-            zis = new ZipInputStream(new FileInputStream(saveStateArchive));
-        }
-        catch (Exception e) {
-            System.err.println("Couldn't get zip input stream to supplied file pathname...");
-            return false;
-        }
+    public boolean importFromZip(String base, InputStream exportFileStream) {
+        // wrap input stream with a zip input stream
+        ZipInputStream zis = new ZipInputStream(exportFileStream);
 
         // iterate through entries of zip file
         ZipEntry current = null;
@@ -304,14 +279,13 @@ public class StateIO {
         return true;
     }
 
-    private void errorCleanup(File zipfile, ZipOutputStream zos) {
+    private void errorCleanup(ZipOutputStream zos) {
         try {
             zos.close();
         }
         catch (Exception e) {
             System.err.println("Couldn't close ZipOutputStream zos...");
         }
-        zipfile.delete();
     }
 
     private void closeZipInputStream(ZipInputStream zis) {
