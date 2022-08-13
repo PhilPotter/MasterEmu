@@ -280,41 +280,4 @@ public class ZipBrowser extends Activity {
         failed.show();
         finish();
     }
-
-    /**
-     * This method overrides the A and B buttons - it is just here to provide consistent behaviour on
-     * versions of Android that are <= 4.2
-     */
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        // Fetch the ListView object, so we can redirect requests there and utilise code sharing.
-        boolean returnVal = false;
-
-        // If the event wasn't consumed and we care about it, consume here.
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            if (event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_B) {
-                returnVal = true;
-                finish();
-            } else if (event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_A) {
-                ListView l = (ListView)findViewById(R.id.statelist);
-                int position = l.getSelectedItemPosition();
-                if (position != AdapterView.INVALID_POSITION) {
-                    pc.onItemClick(l, null, position, 0L);
-                }
-                returnVal = true;
-            } else if (event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_X) {
-                ListView l = (ListView)findViewById(R.id.statelist);
-                int position = l.getSelectedItemPosition();
-                if (position != AdapterView.INVALID_POSITION) {
-                    pc.onItemLongClick(l, null, position, 0L);
-                }
-            }
-        }
-
-        if (returnVal)
-            return returnVal;
-
-        return super.dispatchKeyEvent(event);
-    }
-
 }
