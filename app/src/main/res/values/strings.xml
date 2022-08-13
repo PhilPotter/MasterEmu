@@ -5,6 +5,7 @@
     <string name="filebrowser_search">Filter:</string>
     <string name="filebrowser_header_import_states">Choose a State ZIP File</string>
     <string name="filebrowser_header_export_states">Choose an Export Directory</string>
+    <string name="ziprompicker_header">Choose a Zipped ROM</string>
     <string name="pause_header">Emulator Paused</string>
     <string name="help_header">Help</string>
     <string name="credits_header">Credits</string>

@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.zip.CRC32;
 
 /**
  * This class allows the opening of ROM files and save state backups, as well as the saving
@@ -35,6 +36,10 @@ public class FileBrowser extends Activity {
     private static final int OPEN_ROM_REQUEST_CODE = 1337;
     private static final int EXPORT_STATES_REQUEST_CODE = 1338;
     private static final int IMPORT_STATES_REQUEST_CODE = 1339;
+    private static final int OPEN_ZIP_REQUEST_CODE = 1340;
+
+    // Request string for opening zip rom picker data attached to intent
+    public static final String ZIPROMPICKER_URI_ID = "uk.co.philpotter.masteremu.ZipUri";
 
     // define instance variables
     private String actionType;
@@ -89,6 +94,55 @@ public class FileBrowser extends Activity {
         }
     }
 
+    // Put the ROM load routine here to generalise it and allow use by ZIP and non-ZIP
+    // ROMs alike
+    private void loadRomData(InputStream romStream, String ext) {
+        // Open byte array output stream
+        ByteArrayOutputStream romBytes = new ByteArrayOutputStream();
+        boolean romReadCompleted = false;
+        try {
+            while (!romReadCompleted) {
+                byte[] romSection = new byte[8192];
+                int bytesRead = romStream.read(romSection);
+                if (bytesRead > 0)
+                    romBytes.write(romSection, 0, bytesRead);
+                else
+                    romReadCompleted = true;
+            }
+        } catch (IOException e) {
+            showMessage("Failed to read ROM file");
+            finish();
+            return;
+        }
+
+        // Get RomData object
+        RomData romData = new RomData(romBytes.toByteArray(), ext);
+        try {
+            romBytes.close();
+            romStream.close();
+        } catch (IOException e) {
+            showMessage("Failed to close ROM file");
+            finish();
+            return;
+        }
+
+        // Now load SDL
+        FileBrowser.transferData = romData;
+
+        if (OptionStore.game_genie) {
+            // get CRC32 checksum
+            CRC32 crcGen = new CRC32();
+            crcGen.update(romData.getRomData());
+            FileBrowser.transferChecksum = Long.toHexString(crcGen.getValue());
+            Intent codesIntent = new Intent(FileBrowser.this, CodesActivity.class);
+            startActivity(codesIntent);
+        } else {
+            Intent sdlIntent = new Intent(FileBrowser.this, SDLActivity.class);
+            startActivity(sdlIntent);
+        }
+        finish();
+    }
+
     /**
      * We use this method as a callback to perform the actual work on the URI
      * returned by the file picker.
@@ -107,66 +161,52 @@ public class FileBrowser extends Activity {
                     case IMPORT_STATES_REQUEST_CODE:
                         showMessage("Import was cancelled");
                         break;
+                    case OPEN_ZIP_REQUEST_CODE:
+                        // Have this as a handler
+                        break;
                 }
                 finish();
                 break;
             case RESULT_OK:
                 switch (requestCode) {
+                    case OPEN_ZIP_REQUEST_CODE:
+                        loadRomData(ZipRomPicker.zis, ZipRomPicker.ext);
+
+                        break;
                     case OPEN_ROM_REQUEST_CODE:
                         Uri romUri = data.getData();
                         String ext = romUri.toString().substring(romUri.toString().lastIndexOf('.')).toLowerCase();
 
                         // Check we support this filetype
-                        if (!(ext.equals(".gg") || ext.equals(".sms"))) {
+                        if (!(ext.equals(".gg") || ext.equals(".sms") || ext.equals(".zip"))) {
                             showMessage("Filetype " + ext + " not supported");
                             finish();
                             return;
                         }
 
-                        // Open input stream from ROM file
-                        InputStream romStream = null;
-                        try {
-                            romStream = getContentResolver().openInputStream(romUri);
-                        } catch (IOException e) {
-                            showMessage("Failed to open ROM file");
-                            finish();
-                            return;
-                        }
+                        // Is this a ZIP file?
+                        boolean isZip = ext.equals(".zip");
 
-                        // Open byte array output stream
-                        ByteArrayOutputStream romBytes = new ByteArrayOutputStream();
-                        boolean romReadCompleted = false;
-                        try {
-                            while (!romReadCompleted) {
-                                byte[] romSection = new byte[8192];
-                                int bytesRead = romStream.read(romSection);
-                                if (bytesRead > 0)
-                                    romBytes.write(romSection, 0, bytesRead);
-                                else
-                                    romReadCompleted = true;
+                        // If we selected a ZIP file, we need to get an input stream for
+                        // the correct entry
+                        if (isZip) {
+                            Intent zipRomPicker = new Intent(FileBrowser.this, ZipRomPicker.class);
+                            zipRomPicker.putExtra(ZIPROMPICKER_URI_ID, romUri);
+                            startActivityForResult(zipRomPicker, OPEN_ZIP_REQUEST_CODE);
+                        } else {
+                            // Open input stream from ROM file
+                            InputStream romStream = null;
+                            try {
+                                romStream = getContentResolver().openInputStream(romUri);
+                            } catch (IOException e) {
+                                showMessage("Failed to open ROM file");
+                                finish();
+                                return;
                             }
-                        } catch (IOException e) {
-                            showMessage("Failed to read ROM file");
-                            finish();
-                            return;
+
+                            loadRomData(romStream, ext);
                         }
 
-                        // Get RomData object
-                        RomData romData = new RomData(romBytes.toByteArray(), ext);
-                        try {
-                            romBytes.close();
-                            romStream.close();
-                        } catch (IOException e) {
-                            showMessage("Failed to close ROM file");
-                            finish();
-                            return;
-                        }
-
-                        // Now load SDL
-                        FileBrowser.transferData = romData;
-                        Intent sdlIntent = new Intent(FileBrowser.this, SDLActivity.class);
-                        startActivity(sdlIntent);
-                        finish();
                         break;
                     case EXPORT_STATES_REQUEST_CODE:
                         Uri stateFileOutUri = data.getData();
@@ -224,7 +264,7 @@ public class FileBrowser extends Activity {
      * This shows a message.
      * @param message
      */
-    public void showMessage(String message) {
+    private void showMessage(String message) {
         Toast messageToast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
         messageToast.show();
     }

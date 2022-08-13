@@ -1,4 +1,4 @@
-/* MasterEmu save state browser source code file
+/* MasterEmu zip browser source code file
    copyright Phil Potter, 2019 */
 
 package uk.co.philpotter.masteremu;
@@ -7,29 +7,29 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import android.widget.ListView;
-import android.view.KeyEvent;
 
 /**
  * This class loads a save state and then exits.
  */
-public class StateBrowser extends Activity {
+public class ZipBrowser extends Activity {
 
     // define instance variables
     private long emulatorContainerPointer;
@@ -208,7 +208,7 @@ public class StateBrowser extends Activity {
         @Override
         public void onItemClick(AdapterView av, View v, int position, long id) {
             File file = (File)av.getItemAtPosition(position);
-            loadStateStub(StateBrowser.this.emulatorContainerPointer, file.getName());
+            loadStateStub(ZipBrowser.this.emulatorContainerPointer, file.getName());
         }
 
         @Override
@@ -216,7 +216,7 @@ public class StateBrowser extends Activity {
             deletionHolder = (File)av.getItemAtPosition(position);
 
             // create dialogue
-            AlertDialog deleteMenu = new AlertDialog.Builder(StateBrowser.this).create();
+            AlertDialog deleteMenu = new AlertDialog.Builder(ZipBrowser.this).create();
             deleteMenu.setTitle("Deletion Prompt");
             deleteMenu.setMessage("Are you sure you want to delete " + deletionHolder.getName() + "?");
             DeletionListener dl = new DeletionListener();
@@ -242,41 +242,41 @@ public class StateBrowser extends Activity {
                     FilesystemAdapter fsa = (FilesystemAdapter)lv.getAdapter();
                     fsa.deleteFromList(deletionHolder);
                     deletionHolder = null;
-                    StateBrowser.this.deleteStateSucceeded();
+                    ZipBrowser.this.deleteStateSucceeded();
                 } else {
-                    StateBrowser.this.deleteStateFailed();
+                    ZipBrowser.this.deleteStateFailed();
                 }
                 break;
             case DialogInterface.BUTTON_NEGATIVE:
-                StateBrowser.this.deleteStateCancelled();
+                ZipBrowser.this.deleteStateCancelled();
                 break;
             }
         }
     }
 
     public void deleteStateFailed() {
-        Toast failed = Toast.makeText(StateBrowser.this, "State deletion failed", Toast.LENGTH_SHORT);
+        Toast failed = Toast.makeText(ZipBrowser.this, "State deletion failed", Toast.LENGTH_SHORT);
         failed.show();
     }
 
     public void deleteStateSucceeded() {
-        Toast success = Toast.makeText(StateBrowser.this, "State deleted", Toast.LENGTH_SHORT);
+        Toast success = Toast.makeText(ZipBrowser.this, "State deleted", Toast.LENGTH_SHORT);
         success.show();
     }
 
     public void deleteStateCancelled() {
-        Toast cancelled = Toast.makeText(StateBrowser.this, "State not deleted", Toast.LENGTH_SHORT);
+        Toast cancelled = Toast.makeText(ZipBrowser.this, "State not deleted", Toast.LENGTH_SHORT);
         cancelled.show();
     }
 
     public void loadStateSucceeded() {
-        Toast success = Toast.makeText(StateBrowser.this, "Successfully loaded state", Toast.LENGTH_SHORT);
+        Toast success = Toast.makeText(ZipBrowser.this, "Successfully loaded state", Toast.LENGTH_SHORT);
         success.show();
         finish();
     }
 
     public void loadStateFailed() {
-        Toast failed = Toast.makeText(StateBrowser.this, "Failed to load state", Toast.LENGTH_SHORT);
+        Toast failed = Toast.makeText(ZipBrowser.this, "Failed to load state", Toast.LENGTH_SHORT);
         failed.show();
         finish();
     }

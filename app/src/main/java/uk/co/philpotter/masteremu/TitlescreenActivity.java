@@ -364,7 +364,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
      * This shows a message.
      * @param message
      */
-    public void showMessage(String message) {
+    private void showMessage(String message) {
         Toast messageToast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
         messageToast.show();
     }
