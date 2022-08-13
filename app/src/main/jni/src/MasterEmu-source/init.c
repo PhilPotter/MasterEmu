@@ -52,6 +52,16 @@ int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jin
     ec.touches.both = -1;
     ec.touches.nothing = -1;
 
+    /* map default buttons for now */
+    ec.buttonMapping.up = KEYCODE_DPAD_UP;
+    ec.buttonMapping.down = KEYCODE_DPAD_DOWN;
+    ec.buttonMapping.left = KEYCODE_DPAD_LEFT;
+    ec.buttonMapping.right = KEYCODE_DPAD_RIGHT;
+    ec.buttonMapping.buttonOne = KEYCODE_BUTTON_A;
+    ec.buttonMapping.buttonTwo = KEYCODE_BUTTON_X;
+    ec.buttonMapping.pauseStart = KEYCODE_BUTTON_START;
+    ec.buttonMapping.back = KEYCODE_BUTTON_B;
+
     /* parse for ROM type */
     if ((ec.params & 0x20) == 0x20)
         ec.isGameGear = true;
@@ -307,7 +317,7 @@ static int MasterEmuEventFilter(void *userdata, SDL_Event *event) {
         if ((*event).user.code == ACTION_DOWN || (*event).user.code == ACTION_UP) {
 
             signed_emuint keycode = (signed_emuint)((*event).user.data1);
-            if ((*event).user.code == ACTION_UP && (keycode == KEYCODE_BUTTON_B || keycode == KEYCODE_BACK)) {
+            if ((*event).user.code == ACTION_UP && (keycode == ec->buttonMapping.back || keycode == KEYCODE_BACK)) {
                 returnVal = 0;
                 JNIEnv *env = (JNIEnv*)SDL_AndroidGetJNIEnv();
                 jobject obj = (jobject)SDL_AndroidGetActivity();

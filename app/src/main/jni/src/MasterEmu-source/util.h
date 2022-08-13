@@ -65,6 +65,18 @@ struct Touches {
 };
 typedef struct Touches Touches;
 
+struct ButtonMapping {
+    emuint up;
+    emuint down;
+    emuint left;
+    emuint right;
+    emuint buttonOne;
+    emuint buttonTwo;
+    emuint pauseStart;
+    emuint back;
+};
+typedef struct ButtonMapping ButtonMapping;
+
 struct EmulatorContainer {
     emubool noStretching;
     emubool isGameGear;
@@ -77,6 +89,7 @@ struct EmulatorContainer {
     emuint romChecksum;
     SDL_atomic_t quitVar;
     Touches touches;
+    ButtonMapping buttonMapping;
     emubyte *consoleMemoryPointer;
 };
 typedef struct EmulatorContainer EmulatorContainer;

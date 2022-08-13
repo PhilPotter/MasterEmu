@@ -1392,53 +1392,53 @@ void util_dealWithButton(EmulatorContainer *ec, SDL_Event *event)
     signed_emuint button = (signed_emuint)((*event).user.data1);
     switch ((*event).user.code) {
         case ACTION_DOWN: /* test which button is being pressed (if any) */
-            if (button == KEYCODE_DPAD_UP) {
+            if (button == ec->buttonMapping.up) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort & 0xFE);
-            } else if (button == KEYCODE_DPAD_DOWN) {
+            } else if (button == ec->buttonMapping.down) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort & 0xFD);
-            } else if (button == KEYCODE_DPAD_LEFT) {
+            } else if (button == ec->buttonMapping.left) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort & 0xFB);
-            } else if (button == KEYCODE_DPAD_RIGHT) {
+            } else if (button == ec->buttonMapping.right) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort & 0xF7);
-            } else if (button == KEYCODE_BUTTON_Y || button == KEYCODE_BUTTON_START || button == KEYCODE_ENTER) {
+            } else if (button == ec->buttonMapping.pauseStart || button == KEYCODE_ENTER) {
                 if ((*ec).isGameGear) {
                     console_handleTempStart((*ec).console, 3, 0);
                 }
-            } else if (button == KEYCODE_BUTTON_A || button == KEYCODE_Z) {
+            } else if (button == ec->buttonMapping.buttonOne || button == KEYCODE_Z) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort & 0xEF);
-            } else if (button == KEYCODE_BUTTON_X || button == KEYCODE_X) {
+            } else if (button == ec->buttonMapping.buttonTwo || button == KEYCODE_X) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort & 0xDF);
             }
             break;
         case ACTION_UP:   /* check which button is being released (if any) */
-            if (button == KEYCODE_DPAD_UP) {
+            if (button == ec->buttonMapping.up) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort | 0x01);
-            } else if (button == KEYCODE_DPAD_DOWN) {
+            } else if (button == ec->buttonMapping.down) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort | 0x02);
-            } else if (button == KEYCODE_DPAD_LEFT) {
+            } else if (button == ec->buttonMapping.left) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort | 0x04);
-            } else if (button == KEYCODE_DPAD_RIGHT) {
+            } else if (button == ec->buttonMapping.right) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort | 0x08);
-            } else if (button == KEYCODE_BUTTON_Y || button == KEYCODE_BUTTON_START || button == KEYCODE_ENTER) {
+            } else if (button == ec->buttonMapping.pauseStart || button == KEYCODE_ENTER) {
                 if ((*ec).isGameGear) {
                     console_handleTempStart((*ec).console, 2, 0);
                 } else {
                     tempPort = console_handleTempPauseStatus((*ec).console, 1, true);
                 }
-            } else if (button == KEYCODE_BUTTON_A || button == KEYCODE_Z) {
+            } else if (button == ec->buttonMapping.buttonOne || button == KEYCODE_Z) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort | 0x10);
-            } else if (button == KEYCODE_BUTTON_X || button == KEYCODE_X) {
+            } else if (button == ec->buttonMapping.buttonTwo || button == KEYCODE_X) {
                 tempPort = console_handleTempDC((*ec).console, 0, 0);
                 console_handleTempDC((*ec).console, 1, tempPort | 0x20);
             }
