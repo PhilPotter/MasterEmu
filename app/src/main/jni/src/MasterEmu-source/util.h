@@ -137,5 +137,7 @@ emuint util_saveState(EmulatorContainer *ec, char *fileName); /* this saves the 
 emuint util_loadState(EmulatorContainer *ec, char *fileName, emubyte **saveState); /* this loads the state of the emulator to memory */
 void util_dealWithButton(EmulatorContainer *ec, SDL_Event *event); /* this handles button presses from physical controllers */
 void util_triggerPainting(EmuBundle *eb); /* this pushes an event to the queue to redraw the screen */
+void util_loadButtonMapping(EmulatorContainer *ec); /* this loads a button mapping file if one exists */
+void util_loadDefaultButtonMapping(EmulatorContainer *ec); /* this loads the default button mappings */
 
 #endif

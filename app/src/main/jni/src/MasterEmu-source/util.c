@@ -1462,3 +1462,100 @@ void util_triggerPainting(EmuBundle *eb)
     e.user.data1 = (void *)eb;
     SDL_PushEvent(&e);
 }
+
+/* this function loads the default button mappings */
+void util_loadDefaultButtonMapping(EmulatorContainer *ec)
+{
+    ec->buttonMapping.up = KEYCODE_DPAD_UP;
+    ec->buttonMapping.down = KEYCODE_DPAD_DOWN;
+    ec->buttonMapping.left = KEYCODE_DPAD_LEFT;
+    ec->buttonMapping.right = KEYCODE_DPAD_RIGHT;
+    ec->buttonMapping.buttonOne = KEYCODE_BUTTON_A;
+    ec->buttonMapping.buttonTwo = KEYCODE_BUTTON_X;
+    ec->buttonMapping.pauseStart = KEYCODE_BUTTON_START;
+    ec->buttonMapping.back = KEYCODE_BUTTON_B;
+}
+
+/* this function loads a button mapping file if one exists, thus changing the layout of
+ * the physical controller in use */
+void util_loadButtonMapping(EmulatorContainer *ec)
+{
+    /* determine where to get state file from */
+    char *internalPath = (char *)SDL_AndroidGetInternalStoragePath();
+    if (internalPath == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't get internal storage path...");
+        return;
+    }
+
+    /* now we formulate path for the mapping file */
+    char buttonMappingPath[strlen(internalPath) + /* length of internal storage path */
+                           1 + /* forward slash */
+                           strlen("button_mapping.ini") +
+                           1 /* null terminator */];
+
+    /* form actual path now */
+    if (sprintf(buttonMappingPath, "%s/%s", internalPath, "button_mapping.ini") < 0) {
+        __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't create button mapping path...");
+        return;
+    }
+
+    /* check if a button mapping file is present, and apply it if so - assume correct layout
+     * due to internal nature */
+    FILE *buttonMappingFile = fopen(buttonMappingPath, "rb");
+    if (buttonMappingFile != NULL) {
+        /* temporary local array for holding each line on the stack before conversion */
+        char numStr[10];
+        int num;
+
+        /* read each line, and assign it to correct button in struct */
+        for (int i = 0; i < 8; i++) {
+            /* read into local string */
+            char *numPtr = numStr;
+            int c;
+            while ((c = fgetc(buttonMappingFile)) != '\n' && c != EOF) {
+                *numPtr++ = (char)c;
+            }
+
+            /* basic error check, should never get EOF, set default state and return */
+            if (c == EOF) {
+                fclose(buttonMappingFile);
+                util_loadDefaultButtonMapping(ec);
+                __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't read button mapping file...\n");
+                return;
+            }
+
+            *numPtr = '\0';
+
+            /* convert string to actual number, and assign it */
+            num = atoi(numStr);
+            switch (i) {
+            case 0:
+                ec->buttonMapping.up = num;
+                break;
+            case 1:
+                ec->buttonMapping.down = num;
+                break;
+            case 2:
+                ec->buttonMapping.left = num;
+                break;
+            case 3:
+                ec->buttonMapping.right = num;
+                break;
+            case 4:
+                ec->buttonMapping.buttonOne = num;
+                break;
+            case 5:
+                ec->buttonMapping.buttonTwo = num;
+                break;
+            case 6:
+                ec->buttonMapping.pauseStart = num;
+                break;
+            case 7:
+                ec->buttonMapping.back = num;
+                break;
+            }
+        }
+        fclose(buttonMappingFile);
+        __android_log_print(ANDROID_LOG_VERBOSE, "util.c", "Loaded button mapping file from %s", buttonMappingPath);
+    }
+}
