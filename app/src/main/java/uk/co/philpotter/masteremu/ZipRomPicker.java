@@ -1,4 +1,4 @@
-/* MasterEmu save state browser source code file
+/* MasterEmu ZIP file ROM picker source code file
    copyright Phil Potter, 2019 */
 
 package uk.co.philpotter.masteremu;

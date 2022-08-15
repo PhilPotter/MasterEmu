@@ -1,0 +1,1 @@
+On this page you can setup a custom mapping for physical game controllers which will be used whilst MasterEmu is actually emulating a game. Even the back button can be overridden. The mapping can also be set back to the default.

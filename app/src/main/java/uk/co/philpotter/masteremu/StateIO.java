@@ -110,7 +110,7 @@ public class StateIO {
      * This method attempts to import all save states + folders from a zip file referenced
      * by the supplied input stream.
      * @param base
-     * @param pathname
+     * @param exportFileStream
      */
     public boolean importFromZip(String base, InputStream exportFileStream) {
         // wrap input stream with a zip input stream

@@ -1,4 +1,4 @@
-/* MasterEmu manage states screen source code file
+/* MasterEmu controller mapping screen source code file
    copyright Phil Potter, 2019 */
 
 package uk.co.philpotter.masteremu;
@@ -20,19 +20,25 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.libsdl.app.SDLActivity;
+
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
 /**
- * This class acts as the manage states screen of the app.
+ * This class acts as the controller mapping screen of the app.
  */
-public class ManageStatesActivity extends Activity {
+public class ControllerMappingActivity extends Activity {
 
     // define instance variables
     private ControllerSelection selectionObj;
     private long timeSinceLastAnaloguePress = 0;
-    private ControllerTextView managestates_wipe_states_button;
+    private ControllerTextView controllermapping_map_button;
+
+    // static variable which can be referenced from SDL
+    static public boolean controller_mapping_mode = false;
 
     /**
      * This method creates the manage states screen.
@@ -41,108 +47,92 @@ public class ManageStatesActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.managestates_activity);
+        setContentView(R.layout.controllermapping_activity);
 
-        StringBuilder managestatesText = new StringBuilder();
+        StringBuilder controllermappingText = new StringBuilder();
         String line = new String();
         BufferedReader bufferedStream = null;
 
         try {
-            bufferedStream = new BufferedReader(new InputStreamReader(getAssets().open("managestates.txt")));
+            bufferedStream = new BufferedReader(new InputStreamReader(getAssets().open("controllermapping.txt")));
 
             while ((line = bufferedStream.readLine()) != null) {
-                managestatesText.append(line);
-                managestatesText.append('\n');
+                controllermappingText.append(line);
+                controllermappingText.append('\n');
             }
         }
         catch (IOException e) {
-            Log.e("ManageStatesActivity:", "Encountered error reading managestates file: " + e.toString());
+            Log.e("ControllerMapping:", "Encountered error reading controllermapping file: " + e.toString());
         }
         finally {
             try {
                 bufferedStream.close();
             }
             catch (IOException e) {
-                Log.e("ManageStatesActivity:", "Encountered error closing managestates file: " + e.toString());
+                Log.e("ControllerMapping:", "Encountered error closing controllermapping file: " + e.toString());
             }
         }
 
-        TextView managestatesView = (TextView)findViewById(R.id.managestates_blurb);
-        managestatesView.setText(managestatesText);
+        TextView controllermappingView = (TextView)findViewById(R.id.controllermapping_blurb);
+        controllermappingView.setText(controllermappingText);
 
         ButtonColourListener bcl = new ButtonColourListener();
-        ControllerTextView managestates_import_states_button = (ControllerTextView)findViewById(R.id.managestates_import_states_button);
-        Intent managestates_import_states_Intent = new Intent(this, FileBrowser.class);
-        managestates_import_states_Intent.putExtra("actionType", "import_states");
-        managestates_import_states_button.setIntent(managestates_import_states_Intent);
-        managestates_import_states_button.setOnTouchListener(bcl);
-        ControllerTextView managestates_export_states_button = (ControllerTextView)findViewById(R.id.managestates_export_states_button);
-        Intent managestates_export_states_Intent = new Intent(this, FileBrowser.class);
-        managestates_export_states_Intent.putExtra("actionType", "export_states");
-        managestates_export_states_button.setIntent(managestates_export_states_Intent);
-        managestates_export_states_button.setOnTouchListener(bcl);
-        managestates_wipe_states_button = (ControllerTextView)findViewById(R.id.managestates_wipe_states_button);
-        managestates_wipe_states_button.setOnTouchListener(bcl);
+        controllermapping_map_button = (ControllerTextView)findViewById(R.id.controllermapping_map_button);
+        controllermapping_map_button.setIntent(new Intent(ControllerMappingActivity.this, SDLActivity.class));
+        controllermapping_map_button.setOnTouchListener(bcl);
+        ControllerTextView controllermapping_reset_button = (ControllerTextView)findViewById(R.id.controllermapping_reset_button);
+        controllermapping_reset_button.setOnTouchListener(bcl);
 
         // Set all buttons to same width
         int longest = 0;
-        managestates_import_states_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        managestates_export_states_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        managestates_wipe_states_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        if (managestates_import_states_button.getMeasuredWidth() > longest)
-            longest = managestates_import_states_button.getMeasuredWidth();
-        if (managestates_export_states_button.getMeasuredWidth() > longest)
-            longest = managestates_export_states_button.getMeasuredWidth();
-        if (managestates_wipe_states_button.getMeasuredWidth() > longest)
-            longest = managestates_wipe_states_button.getMeasuredWidth();
-        managestates_import_states_button.setLayoutParams(new LinearLayout.LayoutParams(longest, managestates_import_states_button.getMeasuredHeight()));
-        managestates_export_states_button.setLayoutParams(new LinearLayout.LayoutParams(longest, managestates_export_states_button.getMeasuredHeight()));
-        managestates_wipe_states_button.setLayoutParams(new LinearLayout.LayoutParams(longest, managestates_wipe_states_button.getMeasuredHeight()));
+        controllermapping_map_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        controllermapping_reset_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        if (controllermapping_map_button.getMeasuredWidth() > longest)
+            longest = controllermapping_map_button.getMeasuredWidth();
+        if (controllermapping_reset_button.getMeasuredWidth() > longest)
+            longest = controllermapping_reset_button.getMeasuredWidth();
+        controllermapping_map_button.setLayoutParams(new LinearLayout.LayoutParams(longest, controllermapping_map_button.getMeasuredHeight()));
+        controllermapping_reset_button.setLayoutParams(new LinearLayout.LayoutParams(longest, controllermapping_reset_button.getMeasuredHeight()));
 
         // Load drawables
         Drawable light = null;
         Drawable dark = null;
         int lightText, darkText;
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             lightText = getResources().getColor(R.color.text_colour);
             darkText = getResources().getColor(R.color.text_greyed_out);
         } else {
             lightText = getResources().getColor(R.color.text_colour, null);
             darkText = getResources().getColor(R.color.text_greyed_out, null);
         }
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) {
             dark = getResources().getDrawable(R.drawable.view_greyed_out_border);
             light = getResources().getDrawable(R.drawable.view_border);
         } else {
             dark = getResources().getDrawable(R.drawable.view_greyed_out_border, null);
             light = getResources().getDrawable(R.drawable.view_border, null);
         }
-        managestates_import_states_button.setActiveDrawable(dark);
-        managestates_import_states_button.setInactiveDrawable(light);
-        managestates_import_states_button.setHighlightedTextColour(darkText);
-        managestates_import_states_button.setUnhighlightedTextColour(lightText);
-        managestates_export_states_button.setActiveDrawable(dark);
-        managestates_export_states_button.setInactiveDrawable(light);
-        managestates_export_states_button.setHighlightedTextColour(darkText);
-        managestates_export_states_button.setUnhighlightedTextColour(lightText);
-        managestates_wipe_states_button.setActiveDrawable(dark);
-        managestates_wipe_states_button.setInactiveDrawable(light);
-        managestates_wipe_states_button.setHighlightedTextColour(darkText);
-        managestates_wipe_states_button.setUnhighlightedTextColour(lightText);
+        controllermapping_map_button.setActiveDrawable(dark);
+        controllermapping_map_button.setInactiveDrawable(light);
+        controllermapping_map_button.setHighlightedTextColour(darkText);
+        controllermapping_map_button.setUnhighlightedTextColour(lightText);
+        controllermapping_reset_button.setActiveDrawable(dark);
+        controllermapping_reset_button.setInactiveDrawable(light);
+        controllermapping_reset_button.setHighlightedTextColour(darkText);
+        controllermapping_reset_button.setUnhighlightedTextColour(lightText);
 
         // Create selection object and add mappings to it.
         selectionObj = new ControllerSelection();
-        selectionObj.addMapping(managestates_import_states_button);
-        selectionObj.addMapping(managestates_export_states_button);
-        selectionObj.addMapping(managestates_wipe_states_button);
+        selectionObj.addMapping(controllermapping_map_button);
+        selectionObj.addMapping(controllermapping_reset_button);
 
         // Set focus
-        View managestates_title = findViewById(R.id.managestates_title);
-        managestates_title.requestFocus();
+        View controllermapping_title = findViewById(R.id.controllermapping_title);
+        controllermapping_title.requestFocus();
 
         // Set new MasterEmuMotionListener
-        View managestates_root = findViewById(R.id.managestates_root);
-        managestates_root.setOnGenericMotionListener(new MasterEmuMotionListener());
+        View controllermapping_root = findViewById(R.id.controllermapping_root);
+        controllermapping_root.setOnGenericMotionListener(new MasterEmuMotionListener());
     }
 
     /**
@@ -184,15 +174,16 @@ public class ManageStatesActivity extends Activity {
                 returnVal = true;
             } else if (keycode == KeyEvent.KEYCODE_BUTTON_A) {
                 if (selectionObj != null) {
-                    if (selectionObj.getSelected() != managestates_wipe_states_button) {
+                    if (selectionObj.getSelected() == controllermapping_map_button) {
+                        ControllerMappingActivity.controller_mapping_mode = true;
                         selectionObj.activate();
                     }
                     else {
                         // create dialogue
-                        AlertDialog wipeMenu = new AlertDialog.Builder(ManageStatesActivity.this).create();
-                        wipeMenu.setTitle("Wipe Prompt");
-                        wipeMenu.setMessage("Are you sure you want to wipe all save states and saves?");
-                        ManageStatesActivity.WipeListener wl = new ManageStatesActivity.WipeListener();
+                        AlertDialog wipeMenu = new AlertDialog.Builder(ControllerMappingActivity.this).create();
+                        wipeMenu.setTitle("Reset Prompt");
+                        wipeMenu.setMessage("Are you sure you want to reset the mapping?");
+                        ControllerMappingActivity.ResetMappingListener wl = new ControllerMappingActivity.ResetMappingListener();
                         wipeMenu.setButton(DialogInterface.BUTTON_POSITIVE, "YES", wl);
                         wipeMenu.setButton(DialogInterface.BUTTON_NEGATIVE, "NO", wl);
                         wipeMenu.show();
@@ -262,7 +253,7 @@ public class ManageStatesActivity extends Activity {
     protected class MasterEmuMotionListener implements View.OnGenericMotionListener {
         @Override
         public boolean onGenericMotion(View v, MotionEvent event) {
-            return ManageStatesActivity.this.motionEvent(event);
+            return ControllerMappingActivity.this.motionEvent(event);
         }
     }
 
@@ -278,25 +269,25 @@ public class ManageStatesActivity extends Activity {
     /**
      * This is the listener which handles wiping of all states.
      */
-    private class WipeListener implements DialogInterface.OnClickListener {
+    private class ResetMappingListener implements DialogInterface.OnClickListener {
         @Override
         public void onClick(DialogInterface dialog, int which) {
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:
-                    StateIO manager = new StateIO();
-                    boolean result = manager.deleteAllStates(getFilesDir().getAbsolutePath());
-
-                    // check success/failure
-                    if (result) {
-                        Toast success = Toast.makeText(ManageStatesActivity.this, "Wiped states successfully", Toast.LENGTH_SHORT);
-                        success.show();
-                    } else {
-                        Toast failure = Toast.makeText(ManageStatesActivity.this, "Couldn't wipe states", Toast.LENGTH_SHORT);
+                    try {
+                        File buttonMappingFile = new File(getFilesDir() + "/button_mapping.ini");
+                        if (buttonMappingFile.exists())
+                            buttonMappingFile.delete();
+                    }
+                    catch (Exception e) {
+                        Toast failure = Toast.makeText(ControllerMappingActivity.this, "Couldn't reset mapping", Toast.LENGTH_SHORT);
                         failure.show();
                     }
+                    Toast success = Toast.makeText(ControllerMappingActivity.this, "Reset mapping successfully", Toast.LENGTH_SHORT);
+                    success.show();
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
-                    ManageStatesActivity.this.showMessage("Wipe of states was cancelled");
+                    ControllerMappingActivity.this.showMessage("Reset of mapping was cancelled");
                     break;
             }
         }
@@ -318,15 +309,16 @@ public class ManageStatesActivity extends Activity {
                 cv.highlight();
             } else if (event.getAction() == MotionEvent.ACTION_UP) {
                 cv.unHighlight();
-                if (cv != managestates_wipe_states_button) {
+                if (cv == controllermapping_map_button) {
+                    ControllerMappingActivity.controller_mapping_mode = true;
                     cv.activate();
                 }
                 else {
                     // create dialogue
-                    AlertDialog wipeMenu = new AlertDialog.Builder(ManageStatesActivity.this).create();
-                    wipeMenu.setTitle("Wipe Prompt");
-                    wipeMenu.setMessage("Are you sure you want to wipe all save states and saves?");
-                    ManageStatesActivity.WipeListener wl = new ManageStatesActivity.WipeListener();
+                    AlertDialog wipeMenu = new AlertDialog.Builder(ControllerMappingActivity.this).create();
+                    wipeMenu.setTitle("Reset Prompt");
+                    wipeMenu.setMessage("Are you sure you want to reset the mapping?");
+                    ControllerMappingActivity.ResetMappingListener wl = new ControllerMappingActivity.ResetMappingListener();
                     wipeMenu.setButton(DialogInterface.BUTTON_POSITIVE, "YES", wl);
                     wipeMenu.setButton(DialogInterface.BUTTON_NEGATIVE, "NO", wl);
                     wipeMenu.show();

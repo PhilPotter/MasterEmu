@@ -59,6 +59,7 @@ import java.util.Locale;
 
 import android.util.DisplayMetrics;
 import uk.co.philpotter.masteremu.CodesActivity;
+import uk.co.philpotter.masteremu.ControllerMappingActivity;
 import uk.co.philpotter.masteremu.FileBrowser;
 import uk.co.philpotter.masteremu.OptionStore;
 import uk.co.philpotter.masteremu.PauseActivity;
@@ -1715,46 +1716,58 @@ class SDLMain implements Runnable {
             Log.v("SDL", "modify thread properties failed " + e.toString());
         }
 
-        RomData romData = FileBrowser.transferData;
-        FileBrowser.transferData = null;
-        FileBrowser.transferChecksum = null;
-        if (romData == null) {
-            return;
-        }
-
-        // check if sound should be disabled
+        // check if we should start in controller mapping mode
         int params = 0;
-        if (OptionStore.disable_sound)
-            params |= 0x01;
-
-        // mark the ROM as needing sRAM only
-        params |= 0x02;
-
-        // check if larger buttons are required
-        if (OptionStore.larger_buttons)
-            params |= 0x04;
-
-        // check if we should disable touch button overlay
-        if (OptionStore.no_buttons)
-            params |= 0x08;
-
-        // check if we should enable Japanese mode
-        if (OptionStore.japanese_mode)
-            params |= 0x10;
-
-        // check if we should start in Game Gear mode
-        if (romData.isGg())
-            params |= 0x20;
-
-        // check if we should disable screen stretching
-        if (OptionStore.no_stretching)
-            params |= 0x40;
-
-        // check if we should use cheat codes
+        RomData romData = null;
         long[] codesArray = null;
-        if (OptionStore.game_genie) {
-            if (CodesActivity.transferCodes != null && CodesActivity.transferCodes.length > 0)
-                codesArray = CodesActivity.transferCodes;
+        if (!ControllerMappingActivity.controller_mapping_mode) {
+            romData = FileBrowser.transferData;
+            FileBrowser.transferData = null;
+            FileBrowser.transferChecksum = null;
+            if (romData == null) {
+                return;
+            }
+
+            // check if sound should be disabled
+            if (OptionStore.disable_sound)
+                params |= 0x01;
+
+            // mark the ROM as needing sRAM only
+            params |= 0x02;
+
+            // check if larger buttons are required
+            if (OptionStore.larger_buttons)
+                params |= 0x04;
+
+            // check if we should disable touch button overlay
+            if (OptionStore.no_buttons)
+                params |= 0x08;
+
+            // check if we should enable Japanese mode
+            if (OptionStore.japanese_mode)
+                params |= 0x10;
+
+            // check if we should start in Game Gear mode
+            if (romData.isGg())
+                params |= 0x20;
+
+            // check if we should disable screen stretching
+            if (OptionStore.no_stretching)
+                params |= 0x40;
+
+            // check if we should use cheat codes
+            if (OptionStore.game_genie) {
+                if (CodesActivity.transferCodes != null && CodesActivity.transferCodes.length > 0)
+                    codesArray = CodesActivity.transferCodes;
+            }
+        } else {
+            // we should, so set param here then wipe it from ControllerMappingActivity,
+            // thus forcing us to start in controller mapping mode
+            params = 0x80;
+            ControllerMappingActivity.controller_mapping_mode = false;
+
+            // also setup dummy ROM data
+            romData = new RomData(new byte[16384], ".sms");
         }
 
         Log.v("SDL", "Running main function " + function + " from library " + library);

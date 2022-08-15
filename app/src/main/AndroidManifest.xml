@@ -80,6 +80,9 @@
         <activity android:name="ManageStatesActivity"
             android:label="@string/app_name">
         </activity>
+        <activity android:name="ControllerMappingActivity"
+            android:label="@string/app_name">
+        </activity>
         <activity android:name="WrongCpuActivity"
             android:label="@string/app_name">
         </activity>

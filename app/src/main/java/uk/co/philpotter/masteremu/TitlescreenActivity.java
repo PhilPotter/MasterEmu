@@ -102,6 +102,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         ButtonColourListener bcl = new ButtonColourListener();
         ControllerTextView title_load_button = (ControllerTextView)findViewById(R.id.title_load_button);
         ControllerTextView title_options_button = (ControllerTextView)findViewById(R.id.title_options_button);
+        ControllerTextView title_controllermapping_button = (ControllerTextView)findViewById(R.id.title_controllermapping_button);
         ControllerTextView title_help_button = (ControllerTextView)findViewById(R.id.title_help_button);
         ControllerTextView title_credits_button = (ControllerTextView)findViewById(R.id.title_credits_button);
         ControllerTextView title_extras_button = (ControllerTextView)findViewById(R.id.title_extras_button);
@@ -109,6 +110,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         ControllerTextView title_exit_button = (ControllerTextView)findViewById(R.id.title_exit_button);
         title_load_button.setOnTouchListener(bcl);
         title_options_button.setOnTouchListener(bcl);
+        title_controllermapping_button.setOnTouchListener(bcl);
         title_help_button.setOnTouchListener(bcl);
         title_credits_button.setOnTouchListener(bcl);
         title_extras_button.setOnTouchListener(bcl);
@@ -123,6 +125,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         int longest = 0;
         title_load_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         title_options_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        title_controllermapping_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         title_help_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         title_credits_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         title_extras_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
@@ -132,6 +135,8 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
             longest = title_load_button.getMeasuredWidth();
         if (title_options_button.getMeasuredWidth() > longest)
             longest = title_options_button.getMeasuredWidth();
+        if (title_controllermapping_button.getMeasuredWidth() > longest)
+            longest = title_controllermapping_button.getMeasuredWidth();
         if (title_help_button.getMeasuredWidth() > longest)
             longest = title_help_button.getMeasuredWidth();
         if (title_credits_button.getMeasuredWidth() > longest)
@@ -144,6 +149,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
             longest = title_exit_button.getMeasuredWidth();
         title_load_button.setLayoutParams(new LayoutParams(longest, title_load_button.getMeasuredHeight()));
         title_options_button.setLayoutParams(new LayoutParams(longest, title_options_button.getMeasuredHeight()));
+        title_controllermapping_button.setLayoutParams(new LayoutParams(longest, title_controllermapping_button.getMeasuredHeight()));
         title_help_button.setLayoutParams(new LayoutParams(longest, title_help_button.getMeasuredHeight()));
         title_credits_button.setLayoutParams(new LayoutParams(longest, title_credits_button.getMeasuredHeight()));
         title_extras_button.setLayoutParams(new LayoutParams(longest, title_extras_button.getMeasuredHeight()));
@@ -176,6 +182,10 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         title_options_button.setInactiveDrawable(light);
         title_options_button.setHighlightedTextColour(darkText);
         title_options_button.setUnhighlightedTextColour(lightText);
+        title_controllermapping_button.setActiveDrawable(dark);
+        title_controllermapping_button.setInactiveDrawable(light);
+        title_controllermapping_button.setHighlightedTextColour(darkText);
+        title_controllermapping_button.setUnhighlightedTextColour(lightText);
         title_help_button.setActiveDrawable(dark);
         title_help_button.setInactiveDrawable(light);
         title_help_button.setHighlightedTextColour(darkText);
@@ -200,6 +210,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         titleIntent.putExtra("actionType", "load_rom");
         title_load_button.setIntent(titleIntent);
         title_options_button.setIntent(new Intent(TitlescreenActivity.this, OptionsActivity.class));
+        title_controllermapping_button.setIntent(new Intent(TitlescreenActivity.this, ControllerMappingActivity.class));
         title_help_button.setIntent(new Intent(TitlescreenActivity.this, HelpActivity.class));
         title_credits_button.setIntent(new Intent(TitlescreenActivity.this, CreditsActivity.class));
         title_extras_button.setIntent(new Intent(TitlescreenActivity.this, ExtrasActivity.class));
@@ -209,6 +220,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         selectionObj = new ControllerSelection();
         selectionObj.addMapping(title_load_button);
         selectionObj.addMapping(title_options_button);
+        selectionObj.addMapping(title_controllermapping_button);
         selectionObj.addMapping(title_help_button);
         selectionObj.addMapping(title_credits_button);
         selectionObj.addMapping(title_extras_button);
