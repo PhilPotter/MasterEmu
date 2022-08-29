@@ -25,6 +25,7 @@ struct SDL_Collection {
     SDL_Texture *pauseLabelTexture;
     SDL_Texture *bothLabelTexture;
     SDL_Texture *actionLabelTexture;
+    SDL_Texture *backTexture;
     SDL_Rect *sourceRect;
     SDL_Rect *windowRect;
     SDL_Rect *dpadRect;
@@ -87,9 +88,14 @@ struct EmulatorContainer {
     emubyte *romData;
     signed_emulong romSize;
     emuint romChecksum;
-    SDL_atomic_t quitVar;
     Touches touches;
     ButtonMapping buttonMapping;
+    emubool showBack;
+    SDL_atomic_t codeOfPressedButton;
+    SDL_mutex *remappingTimerMutex;
+    emuint remappingTimerTicks;
+    SDL_mutex *remappingWaitMutex;
+    SDL_cond *remappingCondVar;
     emubyte *consoleMemoryPointer;
 };
 typedef struct EmulatorContainer EmulatorContainer;
@@ -137,7 +143,9 @@ emuint util_saveState(EmulatorContainer *ec, char *fileName); /* this saves the 
 emuint util_loadState(EmulatorContainer *ec, char *fileName, emubyte **saveState); /* this loads the state of the emulator to memory */
 void util_dealWithButton(EmulatorContainer *ec, SDL_Event *event); /* this handles button presses from physical controllers */
 void util_triggerPainting(EmuBundle *eb); /* this pushes an event to the queue to redraw the screen */
+void util_triggerRemapPainting(EmuBundle *eb); /* this pushes an event to the queue to redraw the screen in controller remapping mode */
 void util_loadButtonMapping(EmulatorContainer *ec); /* this loads a button mapping file if one exists */
 void util_loadDefaultButtonMapping(EmulatorContainer *ec); /* this loads the default button mappings */
+void util_writeButtonMapping(emuint *mappings, emuint size); /* this writes the button mapping to the correct file location */
 
 #endif

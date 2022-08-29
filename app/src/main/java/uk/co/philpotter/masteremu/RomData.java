@@ -18,10 +18,10 @@ import java.util.zip.ZipEntry;
 public class RomData implements Serializable {
 
     // instance variables
-    private String ext;
     private byte[] romData = null;
     private boolean gg = false;
     private boolean status = false;
+    private int length = 0;
 
     /**
      * This constructor takes a byte array and file extension as input.
@@ -35,10 +35,15 @@ public class RomData implements Serializable {
      */
     private void setupRomData(byte[] source, String ext) {
         // Set file extension and ROM data
-        this.ext = ext;
         this.romData = source;
         if (ext.equals(".gg"))
             this.gg = true;
+
+        // back out here if source is null (i.e. for controller remapping mode)
+        if (source == null) {
+            status = true;
+            return;
+        }
 
         // check final size
         if (romData.length < 16384 || (romData.length % 16384 != 0)) {
@@ -47,10 +52,13 @@ public class RomData implements Serializable {
                 byte[] newRomData = new byte[newLength];
                 System.arraycopy(romData, 512, newRomData, 0, newLength);
                 romData = newRomData;
+                length = newLength;
             } else {
                 Log.e("setupRomData:", "ROM is not the correct size");
                 return;
             }
+        } else {
+            length = romData.length;
         }
 
         // set ready
@@ -76,5 +84,12 @@ public class RomData implements Serializable {
      */
     public byte[] getRomData() {
         return romData;
+    }
+
+    /**
+     * This returns the length property, allowing us to support null sources.
+     */
+    public int getLength() {
+        return length;
     }
 }

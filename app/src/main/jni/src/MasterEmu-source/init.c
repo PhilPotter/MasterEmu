@@ -14,9 +14,14 @@
 
 /* internal helper functions */
 static int MasterEmuEventFilter(void *userdata, SDL_Event *event);
+static int ControllerRemappingEventFilter(void *userdata, SDL_Event *event);
+static int remapButtonsMode(JNIEnv *env, jclass cls, jobject obj, EmulatorContainer *ec);
 static void handleWindowResize(EmuBundle *eb, SDL_Collection s);
+static int LogicFunction(void *p);
 static void stopLogicThread(EmuBundle *eb);
 static void startLogicThread(EmuBundle *eb);
+static int RemappingLogicFunction(void *p);
+static void clearRemappedShowFlags(EmulatorContainer *ec);
 JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_saveStateStub(JNIEnv *, jobject, jlong, jstring);
 JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_StateBrowser_loadStateStub(JNIEnv *, jobject, jlong, jstring);
 JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_quitStub(JNIEnv *, jobject, jlong);
@@ -33,6 +38,7 @@ int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jin
 {
     /* define temp variables to store certain attributes */
     EmulatorContainer ec;
+    memset(&ec, 0, sizeof(ec));
     ec.params = params;
     ec.noStretching = false;
     ec.isGameGear = false;
@@ -51,6 +57,11 @@ int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jin
     ec.touches.pauseStart = -1;
     ec.touches.both = -1;
     ec.touches.nothing = -1;
+    ec.showBack = false;
+
+    /* if controller remapping mode is on, handle initialisation specially here */
+    if ((ec.params & 0x80) == 0x80)
+        return remapButtonsMode(env, cls, obj, &ec);
 
     /* map default buttons for now */
     util_loadDefaultButtonMapping(&ec);
@@ -190,9 +201,6 @@ int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jin
         return ERROR_SETTING_UP_SDL;
     }
 
-    /* setup quit variable */
-    SDL_AtomicSet(&ec.quitVar, 0);
-
     /* deal with save state */
     emubyte *saveState;
     util_loadState(&ec, "current_state.mesav", &saveState);
@@ -219,7 +227,7 @@ int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jin
     SDL_AtomicSet(&eb.logicQuit, 0);
     eb.logicThread = SDL_CreateThread(LogicFunction, "logicThread", (void *)&eb);
     if (eb.logicThread == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating paint thread, aborting...");
+        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating logic thread, aborting...");
         return ERROR_CREATING_LOGIC_THREAD;
     }
     SDL_DetachThread(eb.logicThread);
@@ -271,7 +279,7 @@ int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jin
 }
 
 /* this is the function which runs the logic, from a separate thread */
-int LogicFunction(void *p) {
+static int LogicFunction(void *p) {
     #define PAL_CYCLES_PER_FRAME 70938
     #define NTSC_CYCLES_PER_FRAME 59659
 
@@ -385,6 +393,47 @@ static int MasterEmuEventFilter(void *userdata, SDL_Event *event) {
     }
 
     return returnVal;
+}
+
+/* this event filter is specifically for capturing button presses in remapping mode */
+static int ControllerRemappingEventFilter(void *userdata, SDL_Event *event) {
+    EmuBundle *eb = (EmuBundle *)userdata;
+    EmulatorContainer *ec = (*eb).ec;
+    SDL_Collection s = (*eb).s;
+
+    if ((*event).type == eb->userEventType) {
+        if ((*event).user.code == ACTION_UP) {
+            /* check we have waited enough time to process this event - this alleviates the button 'jitter' */
+            emuint currentTicks = SDL_GetTicks();
+            emubool doNotProcessPress = false;
+            if (SDL_LockMutex(ec->remappingTimerMutex) != 0) {
+                __android_log_print(ANDROID_LOG_ERROR, "init.c", "Couldn't lock remapping timer mutex: %s\n", SDL_GetError());
+                return 0;
+            }
+
+            emuint msSinceLastPress = currentTicks - ec->remappingTimerTicks;
+            signed_emuint buttonCode = (signed_emuint)((*event).user.data1);
+            if (msSinceLastPress < 300) {
+                doNotProcessPress = true;
+            } else {
+                ec->remappingTimerTicks = currentTicks;
+            }
+
+            if (SDL_UnlockMutex(ec->remappingTimerMutex) != 0) {
+                __android_log_print(ANDROID_LOG_ERROR, "init.c", "Couldn't unlock remapping timer mutex: %s\n", SDL_GetError());
+                return 0;
+            }
+
+            if (doNotProcessPress)
+                return 0;
+
+            SDL_AtomicSet(&ec->codeOfPressedButton, buttonCode);
+            SDL_CondBroadcast(ec->remappingCondVar);
+            return 0;
+        }
+    }
+
+    return 1;
 }
 
 /* this function stops the timer event from firing, which is what runs the emulator, in a different thread - it
@@ -534,4 +583,167 @@ static void startLogicThread(EmuBundle *eb)
         __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating paint thread, aborting...");
     }
     SDL_DetachThread(eb->logicThread);
+}
+
+/* this function is specifically for setting up and tearing down the emulator
+   in controller remapping mode */
+static int remapButtonsMode(JNIEnv *env, jclass cls, jobject obj, EmulatorContainer *ec)
+{
+    /* this initialises SDL */
+    SDL_Collection s = util_setupSDL(false, false, false, env, cls, obj, false);
+    if (s == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error setting up SDL, aborting...\n");
+        return ERROR_SETTING_UP_SDL;
+    }
+
+    /* initialise the timer mutex and number of ticks */
+    if ((ec->remappingTimerMutex = SDL_CreateMutex()) == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "controllers.c", "Couldn't create SDL mutex for button remapping timer: %s\n", SDL_GetError());
+        return ERROR_CREATING_TIMER_MUTEX;
+    }
+    ec->remappingTimerTicks = SDL_GetTicks();
+
+    /* setup condition variable and mutex for waiting on button presses */
+    if ((ec->remappingWaitMutex = SDL_CreateMutex()) == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "controllers.c", "Couldn't create SDL mutex for button remapping wait: %s\n", SDL_GetError());
+        return ERROR_CREATING_REMAP_WAIT_MUTEX;
+    }
+    if ((ec->remappingCondVar = SDL_CreateMutex()) == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "controllers.c", "Couldn't create SDL condition variable for button remapping wait: %s\n", SDL_GetError());
+        return ERROR_CREATING_REMAP_COND_VAR;
+    }
+
+    /* setup event filter */
+    EmuBundle eb;
+    eb.ec = ec;
+    eb.s = s;
+    copyOfUserEventCode = eb.userEventType = SDL_RegisterEvents(3);
+
+    /* set paint to default state of OK */
+    SDL_AtomicSet(&eb.dontPaint, 0);
+
+    /* set event filter function going */
+    SDL_SetEventFilter(ControllerRemappingEventFilter, (void *)&eb);
+
+    /* create thread to run logic */
+    SDL_AtomicSet(&eb.logicQuit, 0);
+    eb.logicThread = SDL_CreateThread(RemappingLogicFunction, "remappingLogicThread", (void *)&eb);
+    if (eb.logicThread == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating remapping logic thread, aborting...");
+        return ERROR_CREATING_LOGIC_THREAD;
+    }
+    SDL_DetachThread(eb.logicThread);
+
+    /* paint loop */
+    SDL_Event e;
+    signed_emuint waitStatus = 0;
+
+    while ((waitStatus = SDL_WaitEvent(&e))) {
+        if (e.type == eb.userEventType) {
+            if (e.user.code == ACTION_PAINT)
+                util_paintFrame((EmuBundle *)e.user.data1);
+            else if (e.user.code == MASTEREMU_QUIT)
+                break;
+        }
+    }
+
+    if (waitStatus != 1)
+        __android_log_print(ANDROID_LOG_ERROR, "MasterEmuDebug", "Error waiting on event: %s", SDL_GetError());
+
+    __android_log_print(ANDROID_LOG_VERBOSE, "MasterEmuDebug", "Exiting controller remapping mode...");
+
+    /* destroy timer mutex */
+    SDL_DestroyMutex(ec->remappingTimerMutex);
+
+    /* destroy wait condition var and mutex */
+    SDL_DestroyMutex(ec->remappingWaitMutex);
+    SDL_DestroyCond(ec->remappingCondVar);
+
+    /* this shuts down SDL */
+    util_shutdownSDL(s, false);
+
+    return ALL_GOOD;
+}
+
+/* this is the function which runs the logic for remapping buttons, from a separate thread */
+static int RemappingLogicFunction(void *p) {
+    /* cast p to EmuBundle pointer */
+    EmuBundle *eb = (EmuBundle *)p;
+    EmulatorContainer *ec = eb->ec;
+
+    /* declare array to store mapping codes */
+    emuint mappings[8];
+    memset(mappings, 0, sizeof(mappings));
+
+    /* start emulation loop here */
+    for (signed_emuint i = 0; i < 8; i++) {
+
+        clearRemappedShowFlags(ec);
+
+        switch (i) {
+        case 0:
+            ec->touches.up = 1;
+            break;
+        case 1:
+            ec->touches.down = 1;
+            break;
+        case 2:
+            ec->touches.left = 1;
+            break;
+        case 3:
+            ec->touches.right = 1;
+            break;
+        case 4:
+            ec->touches.buttonOne = 1;
+            break;
+        case 5:
+            ec->touches.buttonTwo = 1;
+            break;
+        case 6:
+            ec->touches.pauseStart = 1;
+            break;
+        case 7:
+            ec->showBack = true;
+            break;
+        }
+
+        util_triggerRemapPainting(eb);
+        SDL_CondWait(ec->remappingCondVar, ec->remappingWaitMutex);
+
+        /* detect what button was pressed */
+        signed_emuint buttonCode = SDL_AtomicGet(&ec->codeOfPressedButton);
+        emubool codeAlreadyUsed = false;
+        for (signed_emuint j = 0; j < i; j++) {
+            if (mappings[j] == buttonCode) {
+                /* we have already used this button, try again */
+                codeAlreadyUsed = true;
+                i--;
+                break;
+            }
+        }
+
+        /* store button code in mappings array */
+        if (!codeAlreadyUsed)
+            mappings[i] = buttonCode;
+    }
+
+    /* write codes in string form to the backing file */
+    util_writeButtonMapping(mappings, sizeof(mappings) / sizeof(emuint));
+
+    /* end this thread now */
+    util_handleQuit(copyOfUserEventCode);
+
+    return 0;
+}
+
+static void clearRemappedShowFlags(EmulatorContainer *ec)
+{
+    ec->touches.up = -1;
+    ec->touches.down = -1;
+    ec->touches.left = -1;
+    ec->touches.right = -1;
+    ec->touches.buttonOne = -1;
+    ec->touches.buttonTwo = -1;
+    ec->touches.pauseStart = -1;
+    ec->showBack = false;
 }

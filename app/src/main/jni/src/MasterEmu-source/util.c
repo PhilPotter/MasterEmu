@@ -49,8 +49,8 @@ SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool l
         s->sourceRect->h = 192;
     }
 
-    /* setup double buffer */
-    if ((s->displayFrame = malloc(sizeof(emubyte) * 184320)) == NULL) {
+    /* setup double buffer - zero out the memory in case we are using controller mapping mode */
+    if ((s->displayFrame = calloc(1, sizeof(emubyte) * 184320)) == NULL) {
         __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't allocate space for display frame buffer...");
         return NULL;
     }
@@ -171,6 +171,11 @@ SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool l
         __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't open both label image: %s\n", SDL_GetError());
         return NULL;
     }
+    SDL_RWops *backFile = SDL_RWFromFile("back.png", "rb");
+    if (backFile == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't open back image: %s\n", SDL_GetError());
+        return NULL;
+    }
 
     s->dpadTexture = IMG_LoadTextureTyped_RW(s->renderer, dpadFile, 1, "PNG");
     if (s->dpadTexture == NULL) {
@@ -210,6 +215,11 @@ SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool l
     s->bothLabelTexture = IMG_LoadTextureTyped_RW(s->renderer, bothLabelFile, 1, "PNG");
     if (s->bothLabelTexture == NULL) {
         __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't load both label PNG texture: %s\n", SDL_GetError());
+        return NULL;
+    }
+    s->backTexture = IMG_LoadTextureTyped_RW(s->renderer, backFile, 1, "PNG");
+    if (s->backTexture == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't load back PNG texture: %s\n", SDL_GetError());
         return NULL;
     }
 
@@ -374,6 +384,7 @@ void util_shutdownSDL(SDL_Collection s, emubool fromResume)
     SDL_DestroyTexture(s->pauseLabelTexture);
     SDL_DestroyTexture(s->actionLabelTexture);
     SDL_DestroyTexture(s->bothLabelTexture);
+    SDL_DestroyTexture(s->backTexture);
 
     /* cleanup SDL renderer */
     SDL_DestroyRenderer(s->renderer);
@@ -495,45 +506,49 @@ void util_paintFrame(EmuBundle *eb)
     /* present pixels */
     SDL_RenderClear(s->renderer);
     SDL_RenderCopy(s->renderer, s->texture, s->sourceRect, s->windowRect);
-    if (!noButtons) {
-        SDL_RenderCopy(s->renderer, s->dpadTexture, NULL, s->dpadRect);
-        SDL_RenderCopy(s->renderer, s->buttonsTexture, NULL, s->buttonsRect);
-        SDL_RenderCopy(s->renderer, s->pauseTexture, NULL, s->pauseRect);
-        SDL_RenderCopy(s->renderer, s->pauseTexture, NULL, s->bothRect);
-        SDL_RenderCopy(s->renderer, s->actionLabelTexture, NULL, s->buttonsRect);
-        SDL_RenderCopy(s->renderer, s->pauseLabelTexture, NULL, s->pauseRect);
-        SDL_RenderCopy(s->renderer, s->bothLabelTexture, NULL, s->bothRect);
-    }
-
-    /* this section paints extra textures if buttons are pressed */
-    if (!noButtons) {
-        if ((*ec).touches.up != -1)
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->upRect);
-        if ((*ec).touches.down != -1)
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->downRect);
-        if ((*ec).touches.left != -1)
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->leftRect);
-        if ((*ec).touches.right != -1)
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->rightRect);
-        if ((*ec).touches.upLeft != -1)
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->upLeftRect);
-        if ((*ec).touches.upRight != -1)
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->upRightRect);
-        if ((*ec).touches.downLeft != -1)
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->downLeftRect);
-        if ((*ec).touches.downRight != -1)
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->downRightRect);
-        if ((*ec).touches.buttonOne != -1)
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->buttonOneRect);
-        if ((*ec).touches.buttonTwo != -1)
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->buttonTwoRect);
-        if ((*ec).touches.pauseStart != -1)
-            SDL_RenderCopy(s->renderer, s->pausePressedTexture, NULL, s->pauseRect);
-        if ((*ec).touches.both != -1) {
-            SDL_RenderCopy(s->renderer, s->pausePressedTexture, NULL, s->bothRect);
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->buttonOneRect);
-            SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->buttonTwoRect);
+    if (!ec->showBack) {
+        if (!noButtons) {
+            SDL_RenderCopy(s->renderer, s->dpadTexture, NULL, s->dpadRect);
+            SDL_RenderCopy(s->renderer, s->buttonsTexture, NULL, s->buttonsRect);
+            SDL_RenderCopy(s->renderer, s->pauseTexture, NULL, s->pauseRect);
+            SDL_RenderCopy(s->renderer, s->pauseTexture, NULL, s->bothRect);
+            SDL_RenderCopy(s->renderer, s->actionLabelTexture, NULL, s->buttonsRect);
+            SDL_RenderCopy(s->renderer, s->pauseLabelTexture, NULL, s->pauseRect);
+            SDL_RenderCopy(s->renderer, s->bothLabelTexture, NULL, s->bothRect);
         }
+
+        /* this section paints extra textures if buttons are pressed */
+        if (!noButtons) {
+            if ((*ec).touches.up != -1)
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->upRect);
+            if ((*ec).touches.down != -1)
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->downRect);
+            if ((*ec).touches.left != -1)
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->leftRect);
+            if ((*ec).touches.right != -1)
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->rightRect);
+            if ((*ec).touches.upLeft != -1)
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->upLeftRect);
+            if ((*ec).touches.upRight != -1)
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->upRightRect);
+            if ((*ec).touches.downLeft != -1)
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->downLeftRect);
+            if ((*ec).touches.downRight != -1)
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->downRightRect);
+            if ((*ec).touches.buttonOne != -1)
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->buttonOneRect);
+            if ((*ec).touches.buttonTwo != -1)
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->buttonTwoRect);
+            if ((*ec).touches.pauseStart != -1)
+                SDL_RenderCopy(s->renderer, s->pausePressedTexture, NULL, s->pauseRect);
+            if ((*ec).touches.both != -1) {
+                SDL_RenderCopy(s->renderer, s->pausePressedTexture, NULL, s->bothRect);
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->buttonOneRect);
+                SDL_RenderCopy(s->renderer, s->pressedTexture, NULL, s->buttonTwoRect);
+            }
+        }
+    } else {
+        SDL_RenderCopy(s->renderer, s->backTexture, NULL, s->dpadRect);
     }
 
     SDL_RenderPresent(s->renderer);
@@ -1463,6 +1478,20 @@ void util_triggerPainting(EmuBundle *eb)
     SDL_PushEvent(&e);
 }
 
+/* this function pushes an event to the queue that triggers a screen repaint for controller remapping mode */
+void util_triggerRemapPainting(EmuBundle *eb)
+{
+    /* create event and push it to event queue */
+    SDL_Event e;
+    memset((void *)&e, 0, sizeof(e));
+    e.type = eb->userEventType;
+    e.user.code = ACTION_PAINT; /* leet */
+    e.user.data1 = (void *)eb;
+    SDL_PushEvent(&e);
+}
+
+
+
 /* this function loads the default button mappings */
 void util_loadDefaultButtonMapping(EmulatorContainer *ec)
 {
@@ -1480,7 +1509,7 @@ void util_loadDefaultButtonMapping(EmulatorContainer *ec)
  * the physical controller in use */
 void util_loadButtonMapping(EmulatorContainer *ec)
 {
-    /* determine where to get state file from */
+    /* determine where to get mapping file from */
     char *internalPath = (char *)SDL_AndroidGetInternalStoragePath();
     if (internalPath == NULL) {
         __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't get internal storage path...");
@@ -1557,5 +1586,39 @@ void util_loadButtonMapping(EmulatorContainer *ec)
         }
         fclose(buttonMappingFile);
         __android_log_print(ANDROID_LOG_VERBOSE, "util.c", "Loaded button mapping file from %s", buttonMappingPath);
+    }
+}
+
+/* this function writes a button mapping file */
+void util_writeButtonMapping(emuint *mappings, emuint size)
+{
+    /* determine where to save mapping file to */
+    char *internalPath = (char *)SDL_AndroidGetInternalStoragePath();
+    if (internalPath == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't get internal storage path...");
+        return;
+    }
+
+    /* now we formulate path for the mapping file */
+    char buttonMappingPath[strlen(internalPath) + /* length of internal storage path */
+                           1 + /* forward slash */
+                           strlen("button_mapping.ini") +
+                           1 /* null terminator */];
+
+    /* form actual path now */
+    if (sprintf(buttonMappingPath, "%s/%s", internalPath, "button_mapping.ini") < 0) {
+        __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't create button mapping path...");
+        return;
+    }
+
+    /* create the mapping file and write the mappings to it */
+    FILE *buttonMappingFile = fopen(buttonMappingPath, "wb");
+    if (buttonMappingFile != NULL) {
+        /* write mappings */
+        for (emuint i = 0; i < size; i++)
+            fprintf(buttonMappingFile, "%u\n", mappings[i]);
+
+        fclose(buttonMappingFile);
+        __android_log_print(ANDROID_LOG_VERBOSE, "util.c", "Wrote button mapping file to %s", buttonMappingPath);
     }
 }

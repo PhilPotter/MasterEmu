@@ -1767,12 +1767,12 @@ class SDLMain implements Runnable {
             ControllerMappingActivity.controller_mapping_mode = false;
 
             // also setup dummy ROM data
-            romData = new RomData(new byte[16384], ".sms");
+            romData = new RomData(null, ".sms");
         }
 
         Log.v("SDL", "Running main function " + function + " from library " + library);
 
-        SDLActivity.nativeRunMain(library, function, arguments, romData.getRomData(), romData.getRomData().length, params, codesArray);
+        SDLActivity.nativeRunMain(library, function, arguments, romData.getRomData(), romData.getLength(), params, codesArray);
 
         Log.v("SDL", "Finished main function");
 

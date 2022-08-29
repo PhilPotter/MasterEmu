@@ -30,8 +30,10 @@
 #define ERROR_ON_CHECKSUM_CHECK 25
 #define ERROR_STATE_ROM_MISMATCH 26
 #define ERROR_ALLOCATING_CONSOLE_MEMORY 27
+#define ERROR_CREATING_TIMER_MUTEX 28
+#define ERROR_CREATING_REMAP_WAIT_MUTEX 29
+#define ERROR_CREATING_REMAP_COND_VAR 30
 
 int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jint romSize, jint params, jlongArray codesArray);
-int LogicFunction(void *p);
 
 #endif
