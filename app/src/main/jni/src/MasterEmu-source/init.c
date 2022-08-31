@@ -7,7 +7,7 @@
 #include <android/log.h>
 #include <time.h>
 #include "init.h"
-#include "../../SDL2-2.0.16/include/SDL.h"
+#include "../../SDL-release-2.24.0/include/SDL.h"
 #include "console.h"
 #include "crc32_imp.h"
 #include "util.h"

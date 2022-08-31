@@ -81,12 +81,12 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         super.onCreate(savedInstanceState);
 
         // Ask for Bluetooth permission
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+        /*if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
                 != PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.BLUETOOTH_CONNECT},
                     BLUETOOTH_CONNECT_REQUEST);
-        }
+        }*/
 
         try {
             Runtime.getRuntime().loadLibrary("SDL2");

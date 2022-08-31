@@ -9,7 +9,7 @@
 #include "crc32_imp.h"
 #include "util.h"
 #include "init.h"
-#include "../../SDL2_image-2.0.5/SDL_image.h"
+#include "../../SDL_image-release-2.6.2/SDL_image.h"
 
 /* this function deals with setting up SDL and initialising all needed structures */
 SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool largerButtons, JNIEnv *env, jclass cls, jobject obj, emubool fromResume)
