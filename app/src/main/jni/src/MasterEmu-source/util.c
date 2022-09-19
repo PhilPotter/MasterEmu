@@ -12,7 +12,7 @@
 #include "../../SDL_image-release-2.6.2/SDL_image.h"
 
 /* this function deals with setting up SDL and initialising all needed structures */
-SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool largerButtons, JNIEnv *env, jclass cls, jobject obj, emubool fromResume)
+SDL_Collection util_setupSDL(JNIEnv *env, jclass cls, jobject obj, EmulatorContainer *ec, emubool noStretching, emubool isGameGear, emubool largerButtons, emubool fromResume)
 {
     /* define variables */
     SDL_Collection s;
@@ -78,21 +78,6 @@ SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool l
     if ((s->windowRect = malloc(sizeof(SDL_Rect))) == NULL) {
         __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't allocate window SDL_Rect struct...\n");
         return NULL;
-    }
-    s->windowRect->x = 0;
-    s->windowRect->y = 0;
-    if (m.w < m.h) {
-        s->windowRect->w = m.w;
-        s->windowRect->h = m.w * 0.75;
-    } else {
-        if (noStretching) {
-            s->windowRect->w = m.h * 1.3333;
-            s->windowRect->h = m.h;
-            s->windowRect->x = (m.w - s->windowRect->w) / 2;
-        } else {
-            s->windowRect->w = m.w;
-            s->windowRect->h = m.h;
-        }
     }
     s->screenWidth = m.w;
     s->screenHeight = m.h;
@@ -304,62 +289,10 @@ SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool l
     if (largerButtons)
         s->pixelsForOneInch *= LARGER_BUTTONS_FACTOR;
 
-    s->dpadRect->w = s->pixelsForOneInch * 1;
-    s->dpadRect->h = s->dpadRect->w;
-    s->buttonsRect->w = s->pixelsForOneInch * 1;
-    s->buttonsRect->h = s->buttonsRect->w / 2;
-    s->buttonOneRect->w = s->buttonTwoRect->w = s->buttonsRect->w / 2;
-    s->buttonOneRect->h = s->buttonTwoRect->h = s->buttonsRect->h;
-    s->pauseRect->w = s->pixelsForOneInch * 0.4;
-    s->pauseRect->h = s->pauseRect->w / 2;
-    s->bothRect->w = s->pauseRect->w;
-    s->bothRect->h = s->pauseRect->h;
-
-    s->dpadRect->x = 0;
-    s->dpadRect->y = m.h - s->dpadRect->h;
-    s->buttonsRect->x = m.w - s->buttonsRect->w;
-    s->buttonsRect->y = m.h - s->buttonsRect->h;
-    s->buttonOneRect->x = s->buttonsRect->x;
-    s->buttonTwoRect->x = s->buttonsRect->x + s->buttonOneRect->w;
-    s->buttonOneRect->y = s->buttonTwoRect->y = s->buttonsRect->y;
-    s->pauseRect->x = s->buttonsRect->x + ((s->buttonsRect->w - (s->pauseRect->w * 2)) / 3);
-    s->pauseRect->y = s->buttonsRect->y - s->pauseRect->h - (s->pixelsForOneInch * 0.125);
-    s->bothRect->x = s->pauseRect->x + s->pauseRect->w + ((s->buttonsRect->w - (s->bothRect->w * 2)) / 3);
-    s->bothRect->y = s->pauseRect->y;
-
-    s->upRect->w = s->dpadRect->w / 3;
-    s->upRect->h = s->upRect->w;
-    s->downRect->w = s->upRect->w;
-    s->downRect->h = s->upRect->w;
-    s->leftRect->w = s->upRect->w;
-    s->leftRect->h = s->upRect->w;
-    s->rightRect->w = s->upRect->w;
-    s->rightRect->h = s->upRect->w;
-    s->upLeftRect->w = s->upRect->w;
-    s->upLeftRect->h = s->upRect->w;
-    s->upRightRect->w = s->upRect->w;
-    s->upRightRect->h = s->upRect->w;
-    s->downLeftRect->w = s->upRect->w;
-    s->downLeftRect->h = s->upRect->w;
-    s->downRightRect->w = s->upRect->w;
-    s->downRightRect->h = s->upRect->w;
-
-    s->upRect->x = s->dpadRect->x + s->upRect->w;
-    s->upRect->y = s->dpadRect->y;
-    s->downRect->x = s->dpadRect->x + s->downRect->w;
-    s->downRect->y = s->dpadRect->y + (s->downRect->h * 2);
-    s->leftRect->x = s->dpadRect->x;
-    s->leftRect->y = s->dpadRect->y + s->leftRect->h;
-    s->rightRect->x = s->dpadRect->x + (s->rightRect->w * 2);
-    s->rightRect->y = s->dpadRect->y + s->rightRect->h;
-    s->upLeftRect->x = s->dpadRect->x;
-    s->upLeftRect->y = s->dpadRect->y;
-    s->upRightRect->x = s->dpadRect->x + (s->upRightRect->w * 2);
-    s->upRightRect->y = s->dpadRect->y;
-    s->downLeftRect->x = s->dpadRect->x;
-    s->downLeftRect->y = s->dpadRect->y + (s->downLeftRect->h * 2);
-    s->downRightRect->x = s->dpadRect->x + (s->downRightRect->w * 2);
-    s->downRightRect->y = s->dpadRect->y + (s->downRightRect->h * 2);
+    /* set initial layout of buttons + game window */
+    if (util_handleWindowResize(ec, s)) {
+        return NULL;
+    }
 
     /* return SDL_Collection object */
     return s;
@@ -650,8 +583,8 @@ emubool util_isSmsGgROM(emuint checksum)
 void util_dealWithTouch(EmulatorContainer *ec, SDL_Collection s, SDL_Event *event)
 {
     /* get X and Y coordinates of touch, as well as the finger ID */
-    float x = (*event).tfinger.x * s->screenWidth;
-    float y = (*event).tfinger.y * s->screenHeight;
+    float x = (*event).tfinger.x * s->usableScreenWidth;
+    float y = (*event).tfinger.y * s->usableScreenHeight;
     SDL_Rect touchLocation;
     touchLocation.x = x;
     touchLocation.y = y;
@@ -1140,32 +1073,40 @@ void util_handleQuit(emuint userEventCode)
     SDL_PushEvent(&event);
 }
 
-/* this function deals with resize events and is called from init.c when no other thread is running */
-void util_handleWindowResize(EmuBundle *eb, SDL_Collection s)
+/* this function deals with resize events and is also called during SDL setup */
+emuint util_handleWindowResize(EmulatorContainer *ec, SDL_Collection s)
 {
-    /* get EmulatorContainer pointer */
-    EmulatorContainer *ec = eb->ec;
+    /* determine new screen resolution */
+    SDL_DisplayMode m;
+    if (SDL_GetCurrentDisplayMode(0, &m) < 0) {
+        __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't get SDL display mode...\n");
+        return ERROR_SIZING_WINDOW;
+    }
 
     /* setup window SDL rectangle */
-    emuint tempWidth = s->screenHeight;
-    emuint tempHeight = s->screenWidth;
+    s->screenWidth = m.w;
+    s->screenHeight = m.h;
+
+    /* determine usable screen space */
+    if (SDL_GetRendererOutputSize(s->renderer, &s->usableScreenWidth, &s->usableScreenHeight)) {
+        __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't get usable screen space...\n");
+        return ERROR_SIZING_WINDOW;
+    }
     s->windowRect->x = 0;
     s->windowRect->y = 0;
-    if (tempWidth < tempHeight) {
-        s->windowRect->w = tempWidth;
-        s->windowRect->h = tempWidth * 0.75;
+    if (s->usableScreenWidth < s->usableScreenHeight) {
+        s->windowRect->w = s->usableScreenWidth;
+        s->windowRect->h = s->usableScreenWidth * 0.75;
     } else {
         if (ec->noStretching) {
-            s->windowRect->w = tempHeight * 1.3333;
-            s->windowRect->h = tempHeight;
-            s->windowRect->x = (tempWidth - s->windowRect->w) / 2;
+            s->windowRect->w = s->usableScreenHeight * 1.3333;
+            s->windowRect->h = s->usableScreenHeight;
+            s->windowRect->x = (s->usableScreenWidth - s->windowRect->w) / 2;
         } else {
-            s->windowRect->w = tempWidth;
-            s->windowRect->h = tempHeight;
+            s->windowRect->w = s->usableScreenWidth;
+            s->windowRect->h = s->usableScreenHeight;
         }
     }
-    s->screenWidth = tempWidth;
-    s->screenHeight = tempHeight;
 
     /* redo rect parameters for new screen layout */
     s->dpadRect->w = s->pixelsForOneInch * 1;
@@ -1180,9 +1121,9 @@ void util_handleWindowResize(EmuBundle *eb, SDL_Collection s)
     s->bothRect->h = s->pauseRect->h;
 
     s->dpadRect->x = 0;
-    s->dpadRect->y = tempHeight - s->dpadRect->h;
-    s->buttonsRect->x = tempWidth - s->buttonsRect->w;
-    s->buttonsRect->y = tempHeight - s->buttonsRect->h;
+    s->dpadRect->y = s->usableScreenHeight - s->dpadRect->h;
+    s->buttonsRect->x = s->usableScreenWidth - s->buttonsRect->w;
+    s->buttonsRect->y = s->usableScreenHeight - s->buttonsRect->h;
     s->buttonOneRect->x = s->buttonsRect->x;
     s->buttonTwoRect->x = s->buttonsRect->x + s->buttonOneRect->w;
     s->buttonOneRect->y = s->buttonTwoRect->y = s->buttonsRect->y;
@@ -1238,6 +1179,8 @@ void util_handleWindowResize(EmuBundle *eb, SDL_Collection s)
     (*ec).touches.buttonTwo = -1;
     (*ec).touches.pauseStart = -1;
     (*ec).touches.both = -1;
+
+    return ALL_GOOD;
 }
 
 /* this function saves the state of the emulator */

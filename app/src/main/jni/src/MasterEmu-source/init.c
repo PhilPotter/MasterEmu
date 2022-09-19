@@ -89,7 +89,7 @@ int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jin
     emubool largerButtons = false;
     if ((ec.params & 0x04) == 0x04)
         largerButtons = true;
-    SDL_Collection s = util_setupSDL(ec.noStretching, ec.isGameGear, largerButtons, env, cls, obj, false);
+    SDL_Collection s = util_setupSDL(env, cls, obj, &ec, ec.noStretching, ec.isGameGear, largerButtons, false);
     if (s == NULL) {
         __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error setting up SDL, aborting...\n");
         return ERROR_SETTING_UP_SDL;
@@ -231,7 +231,7 @@ static int MasterEmuEventFilter(void *userdata, SDL_Event *event) {
         /* deal with resize */
         if ((*event).window.event == SDL_WINDOWEVENT_RESIZED) {
             returnVal = 0;
-            util_handleWindowResize(eb, s);
+            util_handleWindowResize(ec, s);
         }
     } else if ((*event).type == SDL_JOYAXISMOTION) {
         switch ((*event).jaxis.axis) {
@@ -382,7 +382,7 @@ static void startLogicThread(EmuBundle *eb)
 static int remapButtonsMode(JNIEnv *env, jclass cls, jobject obj, EmulatorContainer *ec)
 {
     /* this initialises SDL */
-    SDL_Collection s = util_setupSDL(false, false, false, env, cls, obj, false);
+    SDL_Collection s = util_setupSDL(env, cls, obj, ec, false, false, false, false);
     if (s == NULL) {
         __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error setting up SDL, aborting...\n");
         return ERROR_SETTING_UP_SDL;

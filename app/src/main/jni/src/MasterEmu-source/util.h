@@ -45,6 +45,8 @@ struct SDL_Collection {
     SDL_Rect *bothRect;
     emuint screenWidth;
     emuint screenHeight;
+    emuint usableScreenWidth;
+    emuint usableScreenHeight;
     int pixelsForOneInch;
     emubyte *displayFrame;
 };
@@ -123,7 +125,7 @@ typedef struct EmuBundle EmuBundle;
 #define MASTEREMU_QUIT 1338
 
 /* function declarations */
-SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool largerButtons, JNIEnv *env, jclass cls, jobject obj, emubool fromResume); /* this sets up SDL */
+SDL_Collection util_setupSDL(JNIEnv *env, jclass cls, jobject obj, EmulatorContainer *ec, emubool noStretching, emubool isGameGear, emubool largerButtons, emubool fromResume); /* this sets up SDL */
 void util_shutdownSDL(SDL_Collection s, emubool fromResume); /* this shuts down SDL */
 emubool util_isCodemastersROM(emuint checksum); /* this tells whether the ROM uses a Codemasters mapper */
 emubool util_isPalOnlyROM(emuint checksum); /* this tells us if the ROM is PAL only */
@@ -131,7 +133,7 @@ emubool util_isSmsGgROM(emuint checksum); /* this tells us if the Game Gear ROM 
 void util_handleQuit(emuint userEventCode); /* this lets us quit the emulator */
 void util_paintFrame(EmuBundle *eb); /* this paints one frame for us */
 EmulatorContainer *util_loadRom(EmulatorContainer *ec, signed_emubyte *romData, emuint romSize); /* this loads the ROM from its file */
-void util_handleWindowResize(EmuBundle *eb, SDL_Collection s); /* this deals with window resizing */
+emuint util_handleWindowResize(EmulatorContainer *ec, SDL_Collection s); /* this deals with window resizing */
 void util_dealWithTouch(EmulatorContainer *ec, SDL_Collection s, SDL_Event *event); /* this deals with touch events */
 emuint util_saveState(EmulatorContainer *ec, char *fileName); /* this saves the state of the emulator to a file */
 emuint util_loadState(EmulatorContainer *ec, char *fileName, emubyte **saveState); /* this loads the state of the emulator to memory */

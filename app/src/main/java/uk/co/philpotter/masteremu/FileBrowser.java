@@ -4,13 +4,16 @@
 package uk.co.philpotter.masteremu;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.pm.ActivityInfo;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 
 import android.content.Intent;
 
 import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.widget.Toast;
 
 import org.libsdl.app.SDLActivity;
@@ -176,9 +179,12 @@ public class FileBrowser extends Activity {
                     case OPEN_ROM_REQUEST_CODE:
                         Uri romUri = data.getData();
                         String ext = romUri.toString().substring(romUri.toString().lastIndexOf('.')).toLowerCase();
+                        if (!(ext.equals(".gg") || ext.equals(".sms") || ext.equals(".zip"))) {
+                            ext = getExtensionFromSafUri(romUri);
+                        }
 
                         // Check we support this filetype
-                        if (!(ext.equals(".gg") || ext.equals(".sms") || ext.equals(".zip"))) {
+                        if (ext == null || !(ext.equals(".gg") || ext.equals(".sms") || ext.equals(".zip"))) {
                             showMessage("Filetype " + ext + " not supported");
                             finish();
                             return;
@@ -267,5 +273,38 @@ public class FileBrowser extends Activity {
     private void showMessage(String message) {
         Toast messageToast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
         messageToast.show();
+    }
+
+    /**
+     * Get the proper file name from a content-style URI so we can detect its extension.
+     */
+    private String getExtensionFromSafUri(Uri romUri) {
+
+        // Get content resolver
+        ContentResolver romContentResolver = getContentResolver();
+
+        // Query it with the property we want for this URI to get a cursor
+        String[] romFileProjection = { MediaStore.MediaColumns.DISPLAY_NAME };
+        Cursor romCursor = romContentResolver.query(romUri, romFileProjection, null, null, null);
+
+        // If the cursor was null, crap out here
+        if (romCursor == null)
+            return null;
+
+        String romFilename = null;
+        try {
+            if (romCursor.moveToFirst()) {
+                romFilename = romCursor.getString(0);
+            }
+        }
+        finally {
+            romCursor.close();
+        }
+
+        if (romFilename != null) {
+            return romFilename.substring(romFilename.toString().lastIndexOf('.')).toLowerCase();
+        } else {
+            return null;
+        }
     }
 }

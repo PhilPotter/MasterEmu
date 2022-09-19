@@ -34,6 +34,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
 
     // Bluetooth permissions request
     private static final int BLUETOOTH_CONNECT_REQUEST = 0;
+    private static final int LEGACY_BLUETOOTH_REQEST = 1;
 
     // define instance variables
     private ControllerSelection selectionObj;
@@ -81,12 +82,19 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         super.onCreate(savedInstanceState);
 
         // Ask for Bluetooth permission
-        /*if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
-                != PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.BLUETOOTH_CONNECT},
-                    BLUETOOTH_CONNECT_REQUEST);
-        }*/
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.BLUETOOTH_CONNECT},
+                        BLUETOOTH_CONNECT_REQUEST);
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) != PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.BLUETOOTH},
+                        LEGACY_BLUETOOTH_REQEST);
+            }
+        }
 
         try {
             Runtime.getRuntime().loadLibrary("SDL2");
@@ -359,9 +367,9 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        System.out.println("CALLED!!!!\n");
         for (int i = 0; i < permissions.length; i++) {
-            if (permissions[i].equals(Manifest.permission.BLUETOOTH_CONNECT)) {
+            if (permissions[i].equals(Manifest.permission.BLUETOOTH_CONNECT) ||
+                permissions[i].equals(Manifest.permission.BLUETOOTH)) {
                 // Bluetooth permission request - check if it was approved or not
                 if (grantResults[i] != PERMISSION_GRANTED) {
                     // Permission check failed, exist app
