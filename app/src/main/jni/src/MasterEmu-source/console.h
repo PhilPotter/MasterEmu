@@ -1,5 +1,5 @@
 /* MasterEmu console header file
-   copyright Phil Potter, 2019 */
+   copyright Phil Potter, 2022 */
 
 #ifndef CONSOLE_INCLUDE
 #define CONSOLE_INCLUDE

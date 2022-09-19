@@ -1,5 +1,5 @@
 /* MasterEmu Game Genie/Action Replay code browser source code file
-   copyright Phil Potter, 2019 */
+   copyright Phil Potter, 2022 */
 
 package uk.co.philpotter.masteremu;
 

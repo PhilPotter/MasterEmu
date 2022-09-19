@@ -1,5 +1,5 @@
 /* MasterEmu initialisation header file
-   copyright Phil Potter, 2019 */
+   copyright Phil Potter, 2022 */
 
 #ifndef INIT_MASTEREMU
 #define INIT_MASTEREMU

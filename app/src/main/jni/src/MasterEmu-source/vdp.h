@@ -1,5 +1,5 @@
 /* MasterEmu VDP header file
-   copyright Phil Potter, 2019 */
+   copyright Phil Potter, 2022 */
 
 #ifndef VDP_INCLUDE
 #define VDP_INCLUDE

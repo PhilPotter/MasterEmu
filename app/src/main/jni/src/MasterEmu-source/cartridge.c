@@ -1,5 +1,5 @@
 /* MasterEmu cartridge source code file
-   copyright Phil Potter, 2019 */
+   copyright Phil Potter, 2022 */
 
 #include <stdlib.h>
 #include <string.h>

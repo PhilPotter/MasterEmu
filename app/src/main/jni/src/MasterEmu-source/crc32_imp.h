@@ -1,5 +1,5 @@
 /* MasterEmu CRC32 implementation header file
-   copyright Phil Potter, 2019 */
+   copyright Phil Potter, 2022 */
 
 #ifndef CRC32_INCLUDE
 #define CRC32_INCLUDE

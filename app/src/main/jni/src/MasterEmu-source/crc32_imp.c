@@ -1,5 +1,5 @@
 /* MasterEmu CRC32 implementation source code file
-   copyright Phil Potter, 2019 */
+   copyright Phil Potter, 2022 */
 
 #include <stdio.h>
 #include <stdlib.h>
