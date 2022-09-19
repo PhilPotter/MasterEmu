@@ -10,7 +10,7 @@ Upon loading the ROM a set of touch buttons can be used to play, just as if play
 
 Save state management is supported from v3.0 onwards - from the main menu select 'Manage States' and there is the ability to export all states on the device to a ZIP file, import all states from a ZIP file and finally wipe all states from the device. Additionally, one can delete individual states on the state browser in the pause menu, just by long-pressing on the state from a touch screen or pressing X (or equivalent) on your physical controller. As of v3.2 onwards, the state backups also include any inputted cheat codes.
 
-Physical game controllers are supported. I used an Xbox 360 controller to get this working, but it bypasses the SDL input subsystem and passes the Android button constants straight into the native code. This means it should work with any Android supported controller in theory. Mappings are as follows:
+Physical game controllers are supported. Controller remapping is also supported from v4.0 onwards. I used an Xbox 360 controller and generic Bluetooth controller to get this working, and it is now handled entirely in C code via SDL. This means it should work with any Android supported controller in theory. Default mappings are as follows:
 
 Internal/External Storage View on File Browser: L1 / R1 on 360 controller (or equivalent)
 Press button in menus: A button on 360 controller (or equivalent)
@@ -18,5 +18,7 @@ Console D-PAD: Left analogue stick or D-PAD
 Console Button 1 + MS Start: A button on 360 controller (or equivalent)
 Console Button 2: X button on 360 controller (or equivalent)
 GG Start + MS Pause: Start button or Y button on 360 controller (or equivalent)
+
+Note that when remapping your controller buttons, although the analogue stick will not respond in this mode, it will mirror whatever you set the D-PAD to - i.e. whatever you set the left D-PAD button to will be mapped to the left analogue stick and so on.
 
 Also note that all the menus are fully navigable by controller, and the 360 controller B button (or equivalent) will function in the same way as the 'back' touch button does on an Android device.
