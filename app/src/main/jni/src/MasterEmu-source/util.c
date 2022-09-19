@@ -31,6 +31,20 @@ SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool l
         }
     }
 
+    /* initialise game controller if there is one - take first four game controllers */
+    memset(s->gameControllers, 0, sizeof(s->gameControllers));
+    int controllerCount = 0, numOfJoysticks = SDL_NumJoysticks();
+    for (int i = 0; i < numOfJoysticks && controllerCount < 4; i++) {
+        if (SDL_IsGameController(i)) {
+            s->gameControllers[controllerCount] = SDL_GameControllerOpen(i);
+            if (s->gameControllers[controllerCount] == NULL) {
+                __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't initialise game controller: %s\n", SDL_GetError());
+                return NULL;
+            }
+            controllerCount++;
+        }
+    }
+
     /* setup source SDL rectangle */
     if ((s->sourceRect = malloc(sizeof(SDL_Rect))) == NULL) {
         __android_log_print(ANDROID_LOG_ERROR, "util.c", "Couldn't allocate source SDL_Rect struct...\n");
@@ -391,6 +405,16 @@ void util_shutdownSDL(SDL_Collection s, emubool fromResume)
 
     /* cleanup SDL window */
     SDL_DestroyWindow(s->window);
+
+    /* cleanup game controllers */
+    for (int i = 0; i < 4; i++) {
+        if (s->gameControllers[i] != NULL) {
+            SDL_GameControllerClose(s->gameControllers[i]);
+        } else {
+            // All will be NULL after this point
+            break;
+        }
+    }
 
     /* cleanup SDL itself */
     if (!fromResume)
@@ -1400,74 +1424,84 @@ emuint util_loadState(EmulatorContainer *ec, char *fileName, emubyte **saveState
 }
 
 /* this function deals with detecting which button was pressed on a physical controller */
-void util_dealWithButton(EmulatorContainer *ec, SDL_Event *event)
+void util_dealWithButtons(EmuBundle *eb)
 {
-    /* test if finger is up or down */
-    emubyte tempPort = 0;
-    signed_emuint button = (signed_emuint)((*event).user.data1);
-    switch ((*event).user.code) {
-        case ACTION_DOWN: /* test which button is being pressed (if any) */
-            if (button == ec->buttonMapping.up) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort & 0xFE);
-            } else if (button == ec->buttonMapping.down) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort & 0xFD);
-            } else if (button == ec->buttonMapping.left) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort & 0xFB);
-            } else if (button == ec->buttonMapping.right) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort & 0xF7);
-            } else if (button == ec->buttonMapping.pauseStart || button == KEYCODE_ENTER) {
-                if ((*ec).isGameGear) {
-                    console_handleTempStart((*ec).console, 3, 0);
-                }
-            } else if (button == ec->buttonMapping.buttonOne || button == KEYCODE_Z) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort & 0xEF);
-            } else if (button == ec->buttonMapping.buttonTwo || button == KEYCODE_X) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort & 0xDF);
-            }
-            break;
-        case ACTION_UP:   /* check which button is being released (if any) */
-            if (button == ec->buttonMapping.up) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort | 0x01);
-            } else if (button == ec->buttonMapping.down) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort | 0x02);
-            } else if (button == ec->buttonMapping.left) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort | 0x04);
-            } else if (button == ec->buttonMapping.right) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort | 0x08);
-            } else if (button == ec->buttonMapping.pauseStart || button == KEYCODE_ENTER) {
-                if ((*ec).isGameGear) {
-                    console_handleTempStart((*ec).console, 2, 0);
-                } else {
-                    tempPort = console_handleTempPauseStatus((*ec).console, 1, true);
-                }
-            } else if (button == ec->buttonMapping.buttonOne || button == KEYCODE_Z) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort | 0x10);
-            } else if (button == ec->buttonMapping.buttonTwo || button == KEYCODE_X) {
-                tempPort = console_handleTempDC((*ec).console, 0, 0);
-                console_handleTempDC((*ec).console, 1, tempPort | 0x20);
-            }
-            break;
-        default: break;
+    /* first, get controller state, but only if one is enabled */
+    if (eb->s->gameControllers[0] == NULL)
+        return;
+
+    util_pollAndSetControllerState(eb);
+
+    /* store pointers locally for easier reference */
+    ButtonMapping *bm = &eb->ec->buttonMapping;
+    CurrentControllerState *ccs = &eb->ec->currentControllerState;
+    Console c = eb->ec->console;
+    emubool isGameGear = eb->ec->isGameGear;
+
+    /* read current DC register state */
+    emubyte tempDC = console_handleTempDC(c, 0, 0);
+    emubyte originalTempDC = tempDC;
+
+    /* now merge/mask bits into it as appropriate */
+    if (ccs->buttonArray[bm->up])
+        tempDC &= 0xFE;
+    else
+        tempDC |= 0x01;
+
+    if (ccs->buttonArray[bm->down])
+        tempDC &= 0xFD;
+    else
+        tempDC |= 0x02;
+
+    if (ccs->buttonArray[bm->left])
+        tempDC &= 0xFB;
+    else
+        tempDC |= 0x04;
+
+    if (ccs->buttonArray[bm->right])
+        tempDC &= 0xF7;
+    else
+        tempDC |= 0x08;
+
+    if (ccs->buttonArray[bm->buttonOne])
+        tempDC &= 0xEF;
+    else
+        tempDC |= 0x10;
+
+    if (ccs->buttonArray[bm->buttonTwo])
+        tempDC &= 0xDF;
+    else
+        tempDC |= 0x20;
+
+    /* write DC value if it has changed */
+    if (tempDC != originalTempDC)
+        console_handleTempDC(c, 1, tempDC);
+
+    /* now handle pause/start button */
+    if (isGameGear) {
+        if (ccs->buttonArray[bm->pauseStart])
+            console_handleTempStart(c, 3, 0);
+        else
+            console_handleTempStart(c, 2, 0);
+    } else {
+        if (ccs->buttonArray[bm->pauseStart])
+            console_handleTempPauseStatus(c, 1, true);
     }
 
+    /* handle back button */
+    if (ccs->buttonArray[bm->back])
+        init_loadPauseMenu(eb);
 }
 
-/* this function pushes an event to the queue that triggers a screen repaint */
+/* this function pushes an event to the queue that triggers a screen repaint, and also is
+   where we poll the state of the controller if one is attached */
 void util_triggerPainting(EmuBundle *eb)
 {
     /* mirror VDP buffer to display frame buffer - should help prevent tearing */
     console_handleFrame(eb->ec->console, (void *)eb->s->displayFrame);
+
+    /* poll controller here */
+    util_dealWithButtons(eb);
 
     /* create event and push it to event queue */
     SDL_Event e;
@@ -1495,14 +1529,14 @@ void util_triggerRemapPainting(EmuBundle *eb)
 /* this function loads the default button mappings */
 void util_loadDefaultButtonMapping(EmulatorContainer *ec)
 {
-    ec->buttonMapping.up = KEYCODE_DPAD_UP;
-    ec->buttonMapping.down = KEYCODE_DPAD_DOWN;
-    ec->buttonMapping.left = KEYCODE_DPAD_LEFT;
-    ec->buttonMapping.right = KEYCODE_DPAD_RIGHT;
-    ec->buttonMapping.buttonOne = KEYCODE_BUTTON_A;
-    ec->buttonMapping.buttonTwo = KEYCODE_BUTTON_X;
-    ec->buttonMapping.pauseStart = KEYCODE_BUTTON_START;
-    ec->buttonMapping.back = KEYCODE_BUTTON_B;
+    ec->buttonMapping.up = SDL_CONTROLLER_BUTTON_DPAD_UP;
+    ec->buttonMapping.down = SDL_CONTROLLER_BUTTON_DPAD_DOWN;
+    ec->buttonMapping.left = SDL_CONTROLLER_BUTTON_DPAD_LEFT;
+    ec->buttonMapping.right = SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
+    ec->buttonMapping.buttonOne = SDL_CONTROLLER_BUTTON_A;
+    ec->buttonMapping.buttonTwo = SDL_CONTROLLER_BUTTON_X;
+    ec->buttonMapping.pauseStart = SDL_CONTROLLER_BUTTON_START;
+    ec->buttonMapping.back = SDL_CONTROLLER_BUTTON_B;
 }
 
 /* this function loads a button mapping file if one exists, thus changing the layout of
@@ -1620,5 +1654,61 @@ void util_writeButtonMapping(emuint *mappings, emuint size)
 
         fclose(buttonMappingFile);
         __android_log_print(ANDROID_LOG_VERBOSE, "util.c", "Wrote button mapping file to %s", buttonMappingPath);
+    }
+}
+
+/* this function polls for and sets the state of all buttons we care about */
+void util_pollAndSetControllerState(EmuBundle *eb)
+{
+    /* return here if no controller was detected on start */
+    if (eb->s->gameControllers[0] == NULL)
+        return;
+
+    /* get most recent state of left joystick (for all controllers) */
+    int xAxis = SDL_AtomicGet(&eb->ec->currentControllerState.xAxis);
+    int yAxis = SDL_AtomicGet(&eb->ec->currentControllerState.yAxis);
+
+    /* poll from 0 to SDL_CONTROLLER_BUTTON_MAX-1 as these are the SDL buttons we care about */
+    for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++) {
+        emubyte buttonState = 0;
+
+        /* poll every connected controller for the state of this button */
+        for (int j = 0; j < 4; j++) {
+            if (eb->s->gameControllers[j] != NULL) {
+                SDL_GameControllerButton button = (SDL_GameControllerButton)i;
+
+                /* check analogue stick if relevant - simplistic for now, no Pythagoras etc.
+                 * and simple deadzone of +/- 8,000 */
+                switch (button) {
+                case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                    if (yAxis < -8000)
+                        buttonState |= 1;
+                    break;
+                case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                    if (yAxis > 8000)
+                        buttonState |= 1;
+                    break;
+                case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                    if (xAxis < -8000)
+                        buttonState |= 1;
+                    break;
+                case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                    if (xAxis > 8000)
+                        buttonState |= 1;
+                    break;
+                }
+
+                buttonState |= SDL_GameControllerGetButton(eb->s->gameControllers[j], button);
+            } else {
+                break;
+            }
+        }
+
+        /* now set our internal controller state */
+        if (buttonState) {
+            eb->ec->currentControllerState.buttonArray[i] = true;
+        } else {
+            eb->ec->currentControllerState.buttonArray[i] = false;
+        }
     }
 }

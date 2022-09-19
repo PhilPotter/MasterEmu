@@ -34,6 +34,12 @@
 #define ERROR_CREATING_REMAP_WAIT_MUTEX 29
 #define ERROR_CREATING_REMAP_COND_VAR 30
 
+typedef struct EmuBundle EmuBundle;
+
 int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jint romSize, jint params, jlongArray codesArray);
+void init_loadPauseMenu(EmuBundle *eb);
+JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_saveStateStub(JNIEnv *, jobject, jlong, jstring);
+JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_StateBrowser_loadStateStub(JNIEnv *, jobject, jlong, jstring);
+JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_quitStub(JNIEnv *, jobject, jlong);
 
 #endif

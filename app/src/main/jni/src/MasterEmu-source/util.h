@@ -14,6 +14,7 @@
 
 /* this struct helps us keep all the SDL stuff together */
 struct SDL_Collection {
+    SDL_GameController *gameControllers[4];
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *texture;
@@ -78,6 +79,15 @@ struct ButtonMapping {
 };
 typedef struct ButtonMapping ButtonMapping;
 
+struct CurrentControllerState {
+    /* only some of these buttons are actually polled for - we just store
+       them like this for easy indexing */
+    SDL_atomic_t xAxis;
+    SDL_atomic_t yAxis;
+    emubool buttonArray[SDL_CONTROLLER_BUTTON_MAX];
+};
+typedef struct CurrentControllerState CurrentControllerState;
+
 struct EmulatorContainer {
     emubool noStretching;
     emubool isGameGear;
@@ -90,10 +100,8 @@ struct EmulatorContainer {
     emuint romChecksum;
     Touches touches;
     ButtonMapping buttonMapping;
+    CurrentControllerState currentControllerState;
     emubool showBack;
-    SDL_atomic_t codeOfPressedButton;
-    SDL_mutex *remappingTimerMutex;
-    emuint remappingTimerTicks;
     SDL_mutex *remappingWaitMutex;
     SDL_cond *remappingCondVar;
     emubyte *consoleMemoryPointer;
@@ -110,23 +118,9 @@ struct EmuBundle {
 };
 typedef struct EmuBundle EmuBundle;
 
-#define KEYCODE_BUTTON_A 96
-#define KEYCODE_BUTTON_X 99
-#define KEYCODE_BUTTON_B 97
-#define KEYCODE_BUTTON_Y 100
-#define KEYCODE_DPAD_UP 19
-#define KEYCODE_DPAD_DOWN 20
-#define KEYCODE_DPAD_LEFT 21
-#define KEYCODE_DPAD_RIGHT 22
-#define KEYCODE_BUTTON_START 108
-#define KEYCODE_Z 54
-#define KEYCODE_X 52
-#define KEYCODE_ENTER 66
-#define KEYCODE_BACK 4
+/* custom definitions for MasterEmu specific events */
 #define ACTION_PAINT 1337
-#define ACTION_DOWN 1338
-#define ACTION_UP 1339
-#define MASTEREMU_QUIT 1340
+#define MASTEREMU_QUIT 1338
 
 /* function declarations */
 SDL_Collection util_setupSDL(emubool noStretching, emubool isGameGear, emubool largerButtons, JNIEnv *env, jclass cls, jobject obj, emubool fromResume); /* this sets up SDL */
@@ -141,11 +135,12 @@ void util_handleWindowResize(EmuBundle *eb, SDL_Collection s); /* this deals wit
 void util_dealWithTouch(EmulatorContainer *ec, SDL_Collection s, SDL_Event *event); /* this deals with touch events */
 emuint util_saveState(EmulatorContainer *ec, char *fileName); /* this saves the state of the emulator to a file */
 emuint util_loadState(EmulatorContainer *ec, char *fileName, emubyte **saveState); /* this loads the state of the emulator to memory */
-void util_dealWithButton(EmulatorContainer *ec, SDL_Event *event); /* this handles button presses from physical controllers */
+void util_dealWithButtons(EmuBundle *eb); /* this handles button presses from physical controllers */
 void util_triggerPainting(EmuBundle *eb); /* this pushes an event to the queue to redraw the screen */
 void util_triggerRemapPainting(EmuBundle *eb); /* this pushes an event to the queue to redraw the screen in controller remapping mode */
 void util_loadButtonMapping(EmulatorContainer *ec); /* this loads a button mapping file if one exists */
 void util_loadDefaultButtonMapping(EmulatorContainer *ec); /* this loads the default button mappings */
 void util_writeButtonMapping(emuint *mappings, emuint size); /* this writes the button mapping to the correct file location */
+void util_pollAndSetControllerState(EmuBundle *eb); /* this polls for and sets the state of all buttons we care about */
 
 #endif

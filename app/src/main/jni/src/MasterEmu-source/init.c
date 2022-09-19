@@ -16,17 +16,12 @@
 static int MasterEmuEventFilter(void *userdata, SDL_Event *event);
 static int ControllerRemappingEventFilter(void *userdata, SDL_Event *event);
 static int remapButtonsMode(JNIEnv *env, jclass cls, jobject obj, EmulatorContainer *ec);
-static void handleWindowResize(EmuBundle *eb, SDL_Collection s);
 static int LogicFunction(void *p);
 static void stopLogicThread(EmuBundle *eb);
 static void startLogicThread(EmuBundle *eb);
 static int RemappingLogicFunction(void *p);
 static void clearRemappedShowFlags(EmulatorContainer *ec);
-JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_saveStateStub(JNIEnv *, jobject, jlong, jstring);
-JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_StateBrowser_loadStateStub(JNIEnv *, jobject, jlong, jstring);
-JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_quitStub(JNIEnv *, jobject, jlong);
-JNIEXPORT void JNICALL Java_org_libsdl_app_SDLActivity_onMasterEmuDown(JNIEnv *, jclass, jint);
-JNIEXPORT void JNICALL Java_org_libsdl_app_SDLActivity_onMasterEmuUp(JNIEnv *, jclass, jint);
+static int prepareCodes(JNIEnv *env, jlongArray codesArray);
 
 /* global cheat code array objects */
 ArCheatArray arCheatArray;
@@ -85,6 +80,486 @@ int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jin
     }
     (*env)->ReleaseByteArrayElements(env, romData, byteRomData, JNI_ABORT);
 
+    /* prepare Game Genie/Action Replay codes */
+    int codeResponse = prepareCodes(env, codesArray);
+    if (codeResponse)
+        return codeResponse;
+
+    /* this initialises SDL */
+    emubool largerButtons = false;
+    if ((ec.params & 0x04) == 0x04)
+        largerButtons = true;
+    SDL_Collection s = util_setupSDL(ec.noStretching, ec.isGameGear, largerButtons, env, cls, obj, false);
+    if (s == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error setting up SDL, aborting...\n");
+        return ERROR_SETTING_UP_SDL;
+    }
+
+    /* deal with save state */
+    emubyte *saveState;
+    util_loadState(&ec, "current_state.mesav", &saveState);
+
+    /* setup console */
+    ec.consoleMemoryPointer = malloc(console_getWholeMemoryUsage());
+    if (ec.consoleMemoryPointer == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error allocating console memory, aborting...");
+        return ERROR_ALLOCATING_CONSOLE_MEMORY;
+    }
+    ec.console = createConsole(ec.romData, ec.romSize, ec.romChecksum, ec.isCodemasters, ec.isGameGear, ec.isPal, s->sourceRect, saveState, ec.params, ec.consoleMemoryPointer, 0);
+    if (ec.console == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating console, aborting...");
+        return ERROR_UNABLE_TO_CREATE_CONSOLE;
+    }
+
+    /* setup event filter */
+    EmuBundle eb;
+    eb.ec = &ec;
+    eb.s = s;
+    copyOfUserEventCode = eb.userEventType = SDL_RegisterEvents(1);
+
+    /* create thread to run logic */
+    SDL_AtomicSet(&eb.logicQuit, 0);
+    eb.logicThread = SDL_CreateThread(LogicFunction, "logicThread", (void *)&eb);
+    if (eb.logicThread == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating logic thread, aborting...");
+        return ERROR_CREATING_LOGIC_THREAD;
+    }
+    SDL_DetachThread(eb.logicThread);
+
+    /* set paint to default state of OK */
+    SDL_AtomicSet(&eb.dontPaint, 0);
+
+    /* set event filter function going */
+    SDL_SetEventFilter(MasterEmuEventFilter, (void *)&eb);
+
+    /* paint loop */
+    SDL_Event e;
+    signed_emuint waitStatus = 0;
+    while ((waitStatus = SDL_WaitEvent(&e))) {
+        if (e.type == eb.userEventType) {
+            if (e.user.code == ACTION_PAINT)
+                util_paintFrame((EmuBundle *)e.user.data1);
+            else if (e.user.code == MASTEREMU_QUIT)
+                break;
+        }
+    }
+
+    if (waitStatus != 1)
+        __android_log_print(ANDROID_LOG_ERROR, "MasterEmuDebug", "Error waiting on event: %s", SDL_GetError());
+
+    __android_log_print(ANDROID_LOG_VERBOSE, "MasterEmuDebug", "Exiting emulator core...");
+
+    /* stop logic thread */
+    stopLogicThread(&eb);
+
+    /* stop audio */
+    console_stopAudio(ec.console);
+
+    /* this cleans up the console */
+    destroyConsole(ec.console);
+    free((void *)ec.consoleMemoryPointer);
+
+    /* this cleans up the code array objects' inner cheat arrays - called even if null as this is allowed in C spec */
+    free(arCheatArray.cheats);
+    free(ggCheatArray.cheats);
+
+    /* this shuts down SDL */
+    util_shutdownSDL(s, false);
+    
+    /* this deallocates the ROM data memory buffer */
+    free((void *)(ec.romData));
+
+	return ALL_GOOD;
+}
+
+/* this is the function which runs the logic, from a separate thread */
+static int LogicFunction(void *p) {
+    #define PAL_CYCLES_PER_FRAME 70938
+    #define NTSC_CYCLES_PER_FRAME 59659
+
+    /* cast p to EmuBundle pointer */
+    EmuBundle *eb = (EmuBundle *)p;
+
+    /* start emulation loop here */
+    emuint cyclesPerFrame = eb->ec->isPal ? PAL_CYCLES_PER_FRAME : NTSC_CYCLES_PER_FRAME;
+    emuint cycles = 0;
+    emuint nanoSecondsToCount = eb->ec->isPal ? 20000000 : 16666667;
+    struct timespec t1, t2;
+
+    while (SDL_AtomicGet(&eb->logicQuit) == 0) {
+        clock_gettime(CLOCK_MONOTONIC, &t1);
+        while ((cycles += console_executeInstruction(eb)) < cyclesPerFrame && SDL_AtomicGet(&eb->logicQuit) == 0)
+            ;
+        cycles -= cyclesPerFrame;
+        do {
+            clock_gettime(CLOCK_MONOTONIC, &t2);
+        } while (t2.tv_sec == t1.tv_sec && t2.tv_nsec - t1.tv_nsec < nanoSecondsToCount && SDL_AtomicGet(&eb->logicQuit) == 0);
+    }
+
+    return 0;
+}
+
+/* this function lets us filter events in Android */
+static int MasterEmuEventFilter(void *userdata, SDL_Event *event) {
+    int returnVal = 1;
+    EmuBundle *eb = (EmuBundle *)userdata;
+    EmulatorContainer *ec = (*eb).ec;
+    SDL_Collection s = (*eb).s;
+
+    if ((*event).type == SDL_APP_WILLENTERBACKGROUND) {
+
+        /* deal with save state here */
+        stopLogicThread(eb);
+        if (util_saveState(ec, "current_state.mesav") != ALL_GOOD) {
+            __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error saving state...");
+            return ERROR_SAVING_STATE;
+        }
+
+        returnVal = 0;
+    } else if ((*event).type == SDL_APP_DIDENTERFOREGROUND) {
+
+        startLogicThread(eb);
+        returnVal = 0;
+    } else if ((*event).type == SDL_APP_TERMINATING) {
+        /* terminate app here */
+        util_handleQuit(copyOfUserEventCode);
+        returnVal = 0;
+    } else if ((*event).type == SDL_QUIT) {
+        /* ignore this event */
+        returnVal = 0;
+    } else if ((*event).type == SDL_WINDOWEVENT) {
+        /* deal with resize */
+        if ((*event).window.event == SDL_WINDOWEVENT_RESIZED) {
+            returnVal = 0;
+            util_handleWindowResize(eb, s);
+        }
+    } else if ((*event).type == SDL_JOYAXISMOTION) {
+        switch ((*event).jaxis.axis) {
+        case 0:
+            SDL_AtomicSet(&ec->currentControllerState.xAxis, (*event).jaxis.value);
+            returnVal = 0;
+            break;
+        case 1:
+            SDL_AtomicSet(&ec->currentControllerState.yAxis, (*event).jaxis.value);
+            returnVal = 0;
+            break;
+        }
+    } else if ((*event).type == SDL_KEYUP && ((*event).key.keysym.sym == SDLK_AC_BACK || (*event).key.keysym.sym == SDLK_ESCAPE)) {
+        returnVal = 0;
+        init_loadPauseMenu(eb);
+    } else if ((*event).type == SDL_FINGERUP || (*event).type == SDL_FINGERDOWN || (*event).type == SDL_FINGERMOTION) {
+        returnVal = 0;
+        util_dealWithTouch(ec, s, event);
+    } else if ((*event).type == SDL_CONTROLLERBUTTONUP && (*event).cbutton.which == 0 && (*event).cbutton.button == SDL_CONTROLLER_BUTTON_B) {
+        returnVal = 0;
+        init_loadPauseMenu(eb);
+    }
+
+    return returnVal;
+}
+
+static int ControllerRemappingEventFilter(void *userdata, SDL_Event *event) {
+    int returnVal = 1;
+    EmuBundle *eb = (EmuBundle *)userdata;
+    EmulatorContainer *ec = (*eb).ec;
+    SDL_Collection s = (*eb).s;
+
+    if ((*event).type == SDL_CONTROLLERBUTTONDOWN) {
+        returnVal = 0;
+        util_pollAndSetControllerState(eb);
+        SDL_CondBroadcast(ec->remappingCondVar);
+    }
+
+    return returnVal;
+}
+
+/* this function allows us to call the save state function from the Java side */
+JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_saveStateStub(JNIEnv *env, jobject obj, jlong emulatorContainerPointer, jstring fileName)
+{
+    /* create compatible string */
+    char *cFileName = (char *)(*env)->GetStringUTFChars(env, fileName, NULL);
+
+    /* cast pointer back */
+    EmulatorContainer *ec = (EmulatorContainer *)emulatorContainerPointer;
+
+    /* get class and method id with JNI */
+    jclass PauseActivity_class = (*env)->GetObjectClass(env, obj);
+    jmethodID midSuccess = (*env)->GetMethodID(env, PauseActivity_class, "saveStateSucceeded", "()V");
+    jmethodID midFailure = (*env)->GetMethodID(env, PauseActivity_class, "saveStateFailed", "()V");
+
+
+    /* call save state function */
+    if (util_saveState(ec, cFileName) == ALL_GOOD) {
+        (*env)->CallVoidMethod(env, obj, midSuccess);
+    } else {
+        (*env)->CallVoidMethod(env, obj, midFailure);
+    }
+
+    /* free JNI stuff */
+    (*env)->DeleteLocalRef(env, PauseActivity_class);
+    (*env)->ReleaseStringUTFChars(env, fileName, cFileName);
+}
+
+/* this function allows us to load the state from the Java side */
+JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_StateBrowser_loadStateStub(JNIEnv *env, jobject obj, jlong emulatorContainerPointer, jstring fileName)
+{
+    /* create compatible string */
+    char *cFileName = (char *)(*env)->GetStringUTFChars(env, fileName, NULL);
+
+    /* cast pointer back */
+    EmulatorContainer *ec = (EmulatorContainer *)emulatorContainerPointer;
+
+    /* get class and method id with JNI */
+    jclass StateBrowser_class = (*env)->GetObjectClass(env, obj);
+    jmethodID midSuccess = (*env)->GetMethodID(env, StateBrowser_class, "loadStateSucceeded", "()V");
+    jmethodID midFailure = (*env)->GetMethodID(env, StateBrowser_class, "loadStateFailed", "()V");
+
+    /* load state */
+    emubyte *saveState;
+    if (util_loadState(ec, cFileName, &saveState) == ALL_GOOD) {
+        (*env)->CallVoidMethod(env, obj, midSuccess);
+
+        /* get source rect and audioId from old console */
+        SDL_Rect *sourceRect = console_getSourceRect((*ec).console);
+        emuint audioId = console_getAudioDeviceID((*ec).console);
+
+        /* destroy console */
+        destroyConsole((*ec).console);
+        free((void *)(*ec).consoleMemoryPointer);
+
+        /* recreate console, masking sRam only flag */
+        emuint tempParams = (*ec).params;
+        tempParams &= 0xFFFFFFFD;
+        (*ec).consoleMemoryPointer = malloc(console_getWholeMemoryUsage());
+        if ((*ec).consoleMemoryPointer == NULL) {
+            __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error allocating console memory...");
+        }
+        (*ec).console = createConsole((*ec).romData, (*ec).romSize, (*ec).romChecksum, (*ec).isCodemasters, (*ec).isGameGear, (*ec).isPal, sourceRect, saveState, tempParams, (*ec).consoleMemoryPointer, audioId);
+        if ((*ec).console == NULL) {
+            __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating console...");
+        }
+    } else {
+        (*env)->CallVoidMethod(env, obj, midFailure);
+    }
+
+    /* free JNI stuff */
+    (*env)->DeleteLocalRef(env, StateBrowser_class);
+    (*env)->ReleaseStringUTFChars(env, fileName, cFileName);
+}
+
+/* this function allows us to kill the emulator loop from the Java side */
+JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_quitStub(JNIEnv *env, jobject obj, jlong emulatorContainerPointer)
+{
+    /* cast pointer back */
+    EmulatorContainer *ec = (EmulatorContainer *)emulatorContainerPointer;
+
+    /* quit emulator event loop */
+    util_handleQuit(copyOfUserEventCode);
+}
+
+/* this function stops the logic thread */
+static void stopLogicThread(EmuBundle *eb)
+{
+    SDL_AtomicSet(&eb->dontPaint, 1);
+    SDL_AtomicSet(&eb->logicQuit, 1);
+}
+
+/* this function starts the logic thread */
+static void startLogicThread(EmuBundle *eb)
+{
+    eb->logicThread = NULL;
+    SDL_AtomicSet(&eb->dontPaint, 0);
+    SDL_AtomicSet(&eb->logicQuit, 0);
+    eb->logicThread = SDL_CreateThread(LogicFunction, "logicThread", (void *)eb);
+    if (eb->logicThread == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating paint thread, aborting...");
+    }
+    SDL_DetachThread(eb->logicThread);
+}
+
+/* this function is specifically for setting up and tearing down the emulator
+   in controller remapping mode */
+static int remapButtonsMode(JNIEnv *env, jclass cls, jobject obj, EmulatorContainer *ec)
+{
+    /* this initialises SDL */
+    SDL_Collection s = util_setupSDL(false, false, false, env, cls, obj, false);
+    if (s == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error setting up SDL, aborting...\n");
+        return ERROR_SETTING_UP_SDL;
+    }
+
+    /* setup condition variable and mutex for waiting on button presses */
+    if ((ec->remappingWaitMutex = SDL_CreateMutex()) == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "controllers.c", "Couldn't create SDL mutex for button remapping wait: %s\n", SDL_GetError());
+        return ERROR_CREATING_REMAP_WAIT_MUTEX;
+    }
+    if ((ec->remappingCondVar = SDL_CreateCond()) == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "controllers.c", "Couldn't create SDL condition variable for button remapping wait: %s\n", SDL_GetError());
+        return ERROR_CREATING_REMAP_COND_VAR;
+    }
+
+    EmuBundle eb;
+    eb.ec = ec;
+    eb.s = s;
+    copyOfUserEventCode = eb.userEventType = SDL_RegisterEvents(1);
+
+    /* set paint to default state of OK */
+    SDL_AtomicSet(&eb.dontPaint, 0);
+
+    /* create thread to run logic */
+    SDL_AtomicSet(&eb.logicQuit, 0);
+    eb.logicThread = SDL_CreateThread(RemappingLogicFunction, "remappingLogicThread", (void *)&eb);
+    if (eb.logicThread == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating remapping logic thread, aborting...");
+        return ERROR_CREATING_LOGIC_THREAD;
+    }
+    SDL_DetachThread(eb.logicThread);
+
+    /* set event filter function going */
+    SDL_SetEventFilter(ControllerRemappingEventFilter, (void *)&eb);
+
+    /* paint loop */
+    SDL_Event e;
+    signed_emuint waitStatus = 0;
+
+    while ((waitStatus = SDL_WaitEvent(&e))) {
+        if (e.type == eb.userEventType) {
+            if (e.user.code == ACTION_PAINT)
+                util_paintFrame((EmuBundle *)e.user.data1);
+            else if (e.user.code == MASTEREMU_QUIT)
+                break;
+        }
+    }
+
+    if (waitStatus != 1)
+        __android_log_print(ANDROID_LOG_ERROR, "MasterEmuDebug", "Error waiting on event: %s", SDL_GetError());
+
+    __android_log_print(ANDROID_LOG_VERBOSE, "MasterEmuDebug", "Exiting controller remapping mode...");
+
+    /* destroy wait condition var and mutex */
+    SDL_DestroyMutex(ec->remappingWaitMutex);
+    SDL_DestroyCond(ec->remappingCondVar);
+
+    /* this shuts down SDL */
+    util_shutdownSDL(s, false);
+
+    return ALL_GOOD;
+}
+
+/* this is the function which runs the logic for remapping buttons, from a separate thread */
+static int RemappingLogicFunction(void *p) {
+    /* cast p to EmuBundle pointer */
+    EmuBundle *eb = (EmuBundle *)p;
+    EmulatorContainer *ec = eb->ec;
+    CurrentControllerState *ccs = &ec->currentControllerState;
+
+    /* declare array to store mapping codes */
+    emuint mappings[8];
+    memset(mappings, 0, sizeof(mappings));
+
+    /* start emulation loop here */
+    for (signed_emuint i = 0; i < 8; i++) {
+
+        clearRemappedShowFlags(ec);
+
+        switch (i) {
+        case 0:
+            ec->touches.up = 1;
+            break;
+        case 1:
+            ec->touches.down = 1;
+            break;
+        case 2:
+            ec->touches.left = 1;
+            break;
+        case 3:
+            ec->touches.right = 1;
+            break;
+        case 4:
+            ec->touches.buttonOne = 1;
+            break;
+        case 5:
+            ec->touches.buttonTwo = 1;
+            break;
+        case 6:
+            ec->touches.pauseStart = 1;
+            break;
+        case 7:
+            ec->showBack = true;
+            break;
+        }
+
+        util_triggerRemapPainting(eb);
+        SDL_CondWait(ec->remappingCondVar, ec->remappingWaitMutex);
+
+        /* stop at first button we found */
+        emuint buttonCode = 0;
+        for (signed_emuint j = 0; j < SDL_CONTROLLER_BUTTON_MAX; j++) {
+            if (ccs->buttonArray[j]) {
+                buttonCode = j;
+                break;
+            }
+        }
+
+        /* detect what button was pressed */
+        emubool codeAlreadyUsed = false;
+        for (signed_emuint j = 0; j < i; j++) {
+            if (mappings[j] == buttonCode) {
+                /* we have already used this button, try again */
+                codeAlreadyUsed = true;
+                i--;
+                break;
+            }
+        }
+
+        /* store button code in mappings array */
+        if (!codeAlreadyUsed)
+            mappings[i] = buttonCode;
+    }
+
+    /* write codes in string form to the backing file */
+    util_writeButtonMapping(mappings, sizeof(mappings) / sizeof(emuint));
+
+    /* end this thread now */
+    util_handleQuit(copyOfUserEventCode);
+
+    return 0;
+}
+
+static void clearRemappedShowFlags(EmulatorContainer *ec)
+{
+    ec->touches.up = -1;
+    ec->touches.down = -1;
+    ec->touches.left = -1;
+    ec->touches.right = -1;
+    ec->touches.buttonOne = -1;
+    ec->touches.buttonTwo = -1;
+    ec->touches.pauseStart = -1;
+    ec->showBack = false;
+}
+
+void init_loadPauseMenu(EmuBundle *eb)
+{
+    JNIEnv *env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    jobject obj = (jobject)SDL_AndroidGetActivity();
+    jclass SDLActivity_class = (*env)->GetObjectClass(env, obj);
+    EmulatorContainer *ec = eb->ec;
+
+    /* start pause screen */
+    stopLogicThread(eb);
+    jmethodID mid = (*env)->GetMethodID(env, SDLActivity_class, "loadPauseMenu", "(JLjava/lang/String;)V");
+    char checksumStr[9];
+    if (sprintf(checksumStr, "%08x", ec->romChecksum) < 0) {
+        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Couldn't convert ROM checksum to string...");
+    }
+    jstring statePath = (*env)->NewStringUTF(env, checksumStr);
+    (*env)->CallVoidMethod(env, obj, mid, (jlong)ec, statePath);
+    (*env)->DeleteLocalRef(env, obj);
+    (*env)->DeleteLocalRef(env, SDLActivity_class);
+}
+
+static int prepareCodes(JNIEnv *env, jlongArray codesArray)
+{
     /* parse cheat codes into arrays, preparing where necessary */
     if (codesArray != NULL) {
         /* get number of codes and allocate enough memory to copy them over via JNI */
@@ -191,559 +666,5 @@ int start_emulator(JNIEnv *env, jclass cls, jobject obj, jbyteArray romData, jin
         free(nativeCodesArray);
     }
 
-    /* this initialises SDL */
-    emubool largerButtons = false;
-    if ((ec.params & 0x04) == 0x04)
-        largerButtons = true;
-    SDL_Collection s = util_setupSDL(ec.noStretching, ec.isGameGear, largerButtons, env, cls, obj, false);
-    if (s == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error setting up SDL, aborting...\n");
-        return ERROR_SETTING_UP_SDL;
-    }
-
-    /* deal with save state */
-    emubyte *saveState;
-    util_loadState(&ec, "current_state.mesav", &saveState);
-
-    /* setup console */
-    ec.consoleMemoryPointer = malloc(console_getWholeMemoryUsage());
-    if (ec.consoleMemoryPointer == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error allocating console memory, aborting...");
-        return ERROR_ALLOCATING_CONSOLE_MEMORY;
-    }
-    ec.console = createConsole(ec.romData, ec.romSize, ec.romChecksum, ec.isCodemasters, ec.isGameGear, ec.isPal, s->sourceRect, saveState, ec.params, ec.consoleMemoryPointer, 0);
-    if (ec.console == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating console, aborting...");
-        return ERROR_UNABLE_TO_CREATE_CONSOLE;
-    }
-
-    /* setup event filter */
-    EmuBundle eb;
-    eb.ec = &ec;
-    eb.s = s;
-    copyOfUserEventCode = eb.userEventType = SDL_RegisterEvents(3);
-
-    /* create thread to run logic */
-    SDL_AtomicSet(&eb.logicQuit, 0);
-    eb.logicThread = SDL_CreateThread(LogicFunction, "logicThread", (void *)&eb);
-    if (eb.logicThread == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating logic thread, aborting...");
-        return ERROR_CREATING_LOGIC_THREAD;
-    }
-    SDL_DetachThread(eb.logicThread);
-
-    /* set paint to default state of OK */
-    SDL_AtomicSet(&eb.dontPaint, 0);
-
-    /* set event filter function going */
-    SDL_SetEventFilter(MasterEmuEventFilter, (void *)&eb);
-
-    /* paint loop */
-    SDL_Event e;
-    signed_emuint waitStatus = 0;
-    while ((waitStatus = SDL_WaitEvent(&e))) {
-        if (e.type == eb.userEventType) {
-            if (e.user.code == ACTION_PAINT)
-                util_paintFrame((EmuBundle *)e.user.data1);
-            else if (e.user.code == MASTEREMU_QUIT)
-                break;
-        }
-    }
-
-    if (waitStatus != 1)
-        __android_log_print(ANDROID_LOG_ERROR, "MasterEmuDebug", "Error waiting on event: %s", SDL_GetError());
-
-    __android_log_print(ANDROID_LOG_VERBOSE, "MasterEmuDebug", "Exiting emulator core...");
-
-    /* stop logic thread */
-    stopLogicThread(&eb);
-
-    /* stop audio */
-    console_stopAudio(ec.console);
-
-    /* this cleans up the console */
-    destroyConsole(ec.console);
-    free((void *)ec.consoleMemoryPointer);
-
-    /* this cleans up the code array objects' inner cheat arrays - called even if null as this is allowed in C spec */
-    free(arCheatArray.cheats);
-    free(ggCheatArray.cheats);
-
-    /* this shuts down SDL */
-    util_shutdownSDL(s, false);
-    
-    /* this deallocates the ROM data memory buffer */
-    free((void *)(ec.romData));
-
-	return ALL_GOOD;
-}
-
-/* this is the function which runs the logic, from a separate thread */
-static int LogicFunction(void *p) {
-    #define PAL_CYCLES_PER_FRAME 70938
-    #define NTSC_CYCLES_PER_FRAME 59659
-
-    /* cast p to EmuBundle pointer */
-    EmuBundle *eb = (EmuBundle *)p;
-
-    /* start emulation loop here */
-    emuint cyclesPerFrame = eb->ec->isPal ? PAL_CYCLES_PER_FRAME : NTSC_CYCLES_PER_FRAME;
-    emuint cycles = 0;
-    emuint nanoSecondsToCount = eb->ec->isPal ? 20000000 : 16666667;
-    struct timespec t1, t2;
-
-    while (SDL_AtomicGet(&eb->logicQuit) == 0) {
-        clock_gettime(CLOCK_MONOTONIC, &t1);
-        while ((cycles += console_executeInstruction(eb)) < cyclesPerFrame && SDL_AtomicGet(&eb->logicQuit) == 0)
-            ;
-        cycles -= cyclesPerFrame;
-        do {
-            clock_gettime(CLOCK_MONOTONIC, &t2);
-        } while (t2.tv_sec == t1.tv_sec && t2.tv_nsec - t1.tv_nsec < nanoSecondsToCount && SDL_AtomicGet(&eb->logicQuit) == 0);
-    }
-
-    return 0;
-}
-
-/* this function lets us filter quit events in Android */
-static int MasterEmuEventFilter(void *userdata, SDL_Event *event) {
-    int returnVal = 1;
-    EmuBundle *eb = (EmuBundle *)userdata;
-    EmulatorContainer *ec = (*eb).ec;
-    SDL_Collection s = (*eb).s;
-
-    if ((*event).type == SDL_FINGERDOWN ||
-        (*event).type == SDL_FINGERMOTION ||
-        (*event).type == SDL_FINGERUP) {
-        util_dealWithTouch(ec, s, event);
-        returnVal = 0;
-    } else if ((*event).type == eb->userEventType) {
-        if ((*event).user.code == ACTION_DOWN || (*event).user.code == ACTION_UP) {
-
-            signed_emuint keycode = (signed_emuint)((*event).user.data1);
-            if ((*event).user.code == ACTION_UP && (keycode == ec->buttonMapping.back || keycode == KEYCODE_BACK)) {
-                returnVal = 0;
-                JNIEnv *env = (JNIEnv*)SDL_AndroidGetJNIEnv();
-                jobject obj = (jobject)SDL_AndroidGetActivity();
-                jclass SDLActivity_class = (*env)->GetObjectClass(env, obj);
-
-                /* start pause screen */
-                stopLogicThread(eb);
-                jmethodID mid = (*env)->GetMethodID(env, SDLActivity_class, "loadPauseMenu", "(JLjava/lang/String;)V");
-                char checksumStr[9];
-                if (sprintf(checksumStr, "%08x", (*ec).romChecksum) < 0) {
-                    __android_log_print(ANDROID_LOG_ERROR, "init.c", "Couldn't convert ROM checksum to string...");
-                }
-                jstring statePath = (*env)->NewStringUTF(env, checksumStr);
-                (*env)->CallVoidMethod(env, obj, mid, (jlong)ec, statePath);
-                (*env)->DeleteLocalRef(env, obj);
-                (*env)->DeleteLocalRef(env, SDLActivity_class);
-            } else {
-                util_dealWithButton(ec, event);
-                returnVal = 0;
-            }
-        }
-    } else if ((*event).type == SDL_APP_WILLENTERBACKGROUND) {
-
-        /* deal with save state here */
-        stopLogicThread(eb);
-        if (util_saveState(ec, "current_state.mesav") != ALL_GOOD) {
-            __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error saving state...");
-            return ERROR_SAVING_STATE;
-        }
-
-        returnVal = 0;
-    } else if ((*event).type == SDL_APP_DIDENTERFOREGROUND) {
-
-        startLogicThread(eb);
-        returnVal = 0;
-    } else if ((*event).type == SDL_APP_TERMINATING) {
-        /* terminate app here */
-        util_handleQuit(copyOfUserEventCode);
-        returnVal = 0;
-    } else if ((*event).type == SDL_QUIT) {
-        /* ignore this event */
-        returnVal = 0;
-    } else if ((*event).type == SDL_WINDOWEVENT) {
-        /* deal with resize */
-        if ((*event).window.event == SDL_WINDOWEVENT_RESIZED) {
-            returnVal = 0;
-            handleWindowResize(eb, s);
-        }
-    } else if ((*event).type == SDL_KEYUP) {
-        /* check if it is back key */
-        if ((*event).key.keysym.sym == SDLK_AC_BACK) {
-            returnVal = 0;
-            JNIEnv *env = (JNIEnv*)SDL_AndroidGetJNIEnv();
-            jobject obj = (jobject)SDL_AndroidGetActivity();
-            jclass SDLActivity_class = (*env)->GetObjectClass(env, obj);
-
-            /* start pause screen */
-            stopLogicThread(eb);
-            jmethodID mid = (*env)->GetMethodID(env, SDLActivity_class, "loadPauseMenu", "(JLjava/lang/String;)V");
-            char checksumStr[9];
-            if (sprintf(checksumStr, "%08x", (*ec).romChecksum) < 0) {
-                __android_log_print(ANDROID_LOG_ERROR, "init.c", "Couldn't convert ROM checksum to string...");
-            }
-            jstring statePath = (*env)->NewStringUTF(env, checksumStr);
-            (*env)->CallVoidMethod(env, obj, mid, (jlong)ec, statePath);
-            (*env)->DeleteLocalRef(env, obj);
-            (*env)->DeleteLocalRef(env, SDLActivity_class);
-        }
-    }
-
-    return returnVal;
-}
-
-/* this event filter is specifically for capturing button presses in remapping mode */
-static int ControllerRemappingEventFilter(void *userdata, SDL_Event *event) {
-    EmuBundle *eb = (EmuBundle *)userdata;
-    EmulatorContainer *ec = (*eb).ec;
-    SDL_Collection s = (*eb).s;
-
-    if ((*event).type == eb->userEventType) {
-        if ((*event).user.code == ACTION_UP) {
-            /* check we have waited enough time to process this event - this alleviates the button 'jitter' */
-            emuint currentTicks = SDL_GetTicks();
-            emubool doNotProcessPress = false;
-            if (SDL_LockMutex(ec->remappingTimerMutex) != 0) {
-                __android_log_print(ANDROID_LOG_ERROR, "init.c", "Couldn't lock remapping timer mutex: %s\n", SDL_GetError());
-                return 0;
-            }
-
-            emuint msSinceLastPress = currentTicks - ec->remappingTimerTicks;
-            signed_emuint buttonCode = (signed_emuint)((*event).user.data1);
-            if (msSinceLastPress < 300) {
-                doNotProcessPress = true;
-            } else {
-                ec->remappingTimerTicks = currentTicks;
-            }
-
-            if (SDL_UnlockMutex(ec->remappingTimerMutex) != 0) {
-                __android_log_print(ANDROID_LOG_ERROR, "init.c", "Couldn't unlock remapping timer mutex: %s\n", SDL_GetError());
-                return 0;
-            }
-
-            if (doNotProcessPress)
-                return 0;
-
-            SDL_AtomicSet(&ec->codeOfPressedButton, buttonCode);
-            SDL_CondBroadcast(ec->remappingCondVar);
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
-/* this function stops the timer event from firing, which is what runs the emulator, in a different thread - it
-   then deals with resetting some SDL parameters and then restarts the timer */
-static void handleWindowResize(EmuBundle *eb, SDL_Collection s)
-{
-    /* emulator is now not running, we can make some changes safely as this thread will be the only one
-       accessing the relevant structures */
-    util_handleWindowResize(eb, s);
-}
-
-/* this function allows us to call the save state function from the Java side */
-JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_saveStateStub(JNIEnv *env, jobject obj, jlong emulatorContainerPointer, jstring fileName)
-{
-    /* create compatible string */
-    char *cFileName = (char *)(*env)->GetStringUTFChars(env, fileName, NULL);
-
-    /* cast pointer back */
-    EmulatorContainer *ec = (EmulatorContainer *)emulatorContainerPointer;
-
-    /* get class and method id with JNI */
-    jclass PauseActivity_class = (*env)->GetObjectClass(env, obj);
-    jmethodID midSuccess = (*env)->GetMethodID(env, PauseActivity_class, "saveStateSucceeded", "()V");
-    jmethodID midFailure = (*env)->GetMethodID(env, PauseActivity_class, "saveStateFailed", "()V");
-
-
-    /* call save state function */
-    if (util_saveState(ec, cFileName) == ALL_GOOD) {
-        (*env)->CallVoidMethod(env, obj, midSuccess);
-    } else {
-        (*env)->CallVoidMethod(env, obj, midFailure);
-    }
-
-    /* free JNI stuff */
-    (*env)->DeleteLocalRef(env, PauseActivity_class);
-    (*env)->ReleaseStringUTFChars(env, fileName, cFileName);
-}
-
-/* this function allows us to load the state from the Java side */
-JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_StateBrowser_loadStateStub(JNIEnv *env, jobject obj, jlong emulatorContainerPointer, jstring fileName)
-{
-    /* create compatible string */
-    char *cFileName = (char *)(*env)->GetStringUTFChars(env, fileName, NULL);
-
-    /* cast pointer back */
-    EmulatorContainer *ec = (EmulatorContainer *)emulatorContainerPointer;
-
-    /* get class and method id with JNI */
-    jclass StateBrowser_class = (*env)->GetObjectClass(env, obj);
-    jmethodID midSuccess = (*env)->GetMethodID(env, StateBrowser_class, "loadStateSucceeded", "()V");
-    jmethodID midFailure = (*env)->GetMethodID(env, StateBrowser_class, "loadStateFailed", "()V");
-
-    /* load state */
-    emubyte *saveState;
-    if (util_loadState(ec, cFileName, &saveState) == ALL_GOOD) {
-        (*env)->CallVoidMethod(env, obj, midSuccess);
-
-        /* get source rect and audioId from old console */
-        SDL_Rect *sourceRect = console_getSourceRect((*ec).console);
-        emuint audioId = console_getAudioDeviceID((*ec).console);
-
-        /* destroy console */
-        destroyConsole((*ec).console);
-        free((void *)(*ec).consoleMemoryPointer);
-
-        /* recreate console, masking sRam only flag */
-        emuint tempParams = (*ec).params;
-        tempParams &= 0xFFFFFFFD;
-        (*ec).consoleMemoryPointer = malloc(console_getWholeMemoryUsage());
-        if ((*ec).consoleMemoryPointer == NULL) {
-            __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error allocating console memory...");
-        }
-        (*ec).console = createConsole((*ec).romData, (*ec).romSize, (*ec).romChecksum, (*ec).isCodemasters, (*ec).isGameGear, (*ec).isPal, sourceRect, saveState, tempParams, (*ec).consoleMemoryPointer, audioId);
-        if ((*ec).console == NULL) {
-            __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating console...");
-        }
-    } else {
-        (*env)->CallVoidMethod(env, obj, midFailure);
-    }
-
-    /* free JNI stuff */
-    (*env)->DeleteLocalRef(env, StateBrowser_class);
-    (*env)->ReleaseStringUTFChars(env, fileName, cFileName);
-}
-
-/* this function allows us to kill the emulator loop from the Java side */
-JNIEXPORT void JNICALL Java_uk_co_philpotter_masteremu_PauseActivity_quitStub(JNIEnv *env, jobject obj, jlong emulatorContainerPointer)
-{
-    /* cast pointer back */
-    EmulatorContainer *ec = (EmulatorContainer *)emulatorContainerPointer;
-
-    /* quit emulator event loop */
-    util_handleQuit(copyOfUserEventCode);
-}
-
-/* this function handles controller input when a button goes down */
-JNIEXPORT void JNICALL Java_org_libsdl_app_SDLActivity_onMasterEmuDown(JNIEnv *env, jclass cls, jint keycode)
-{
-    /* define user event for updating display on main thread, and push it
-       to event queue for processing */
-    SDL_Event event;
-    memset((void *)&event, 0, sizeof(event));
-    event.user.code = ACTION_DOWN;
-
-    /* this gets rid of compiler warnings about casting from jint to void * */
-    jlong lKeycode = keycode;
-
-    event.user.data1 = (void *)lKeycode;
-    event.user.data2 = NULL;
-    event.type = copyOfUserEventCode;
-    SDL_PushEvent(&event);
-}
-
-/* this function handles controller input when a button goes up */
-JNIEXPORT void JNICALL Java_org_libsdl_app_SDLActivity_onMasterEmuUp(JNIEnv *env, jclass cls, jint keycode)
-{
-    /* define user event for updating display on main thread, and push it
-       to event queue for processing */
-    SDL_Event event;
-    memset((void *)&event, 0, sizeof(event));
-    event.user.code = ACTION_UP;
-
-    /* this gets rid of compiler warnings about casting from jint to void * */
-    jlong lKeycode = keycode;
-
-    event.user.data1 = (void *)lKeycode;
-    event.user.data2 = NULL;
-    event.type = copyOfUserEventCode;
-    SDL_PushEvent(&event);
-}
-
-/* this function stops the logic thread and allows a suitable time to pass before returning */
-static void stopLogicThread(EmuBundle *eb)
-{
-    SDL_AtomicSet(&eb->dontPaint, 1);
-    SDL_AtomicSet(&eb->logicQuit, 1);
-}
-
-/* this function starts the logic thread */
-static void startLogicThread(EmuBundle *eb)
-{
-    eb->logicThread = NULL;
-    SDL_AtomicSet(&eb->dontPaint, 0);
-    SDL_AtomicSet(&eb->logicQuit, 0);
-    eb->logicThread = SDL_CreateThread(LogicFunction, "logicThread", (void *)eb);
-    if (eb->logicThread == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating paint thread, aborting...");
-    }
-    SDL_DetachThread(eb->logicThread);
-}
-
-/* this function is specifically for setting up and tearing down the emulator
-   in controller remapping mode */
-static int remapButtonsMode(JNIEnv *env, jclass cls, jobject obj, EmulatorContainer *ec)
-{
-    /* this initialises SDL */
-    SDL_Collection s = util_setupSDL(false, false, false, env, cls, obj, false);
-    if (s == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error setting up SDL, aborting...\n");
-        return ERROR_SETTING_UP_SDL;
-    }
-
-    /* initialise the timer mutex and number of ticks */
-    if ((ec->remappingTimerMutex = SDL_CreateMutex()) == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "controllers.c", "Couldn't create SDL mutex for button remapping timer: %s\n", SDL_GetError());
-        return ERROR_CREATING_TIMER_MUTEX;
-    }
-    ec->remappingTimerTicks = SDL_GetTicks();
-
-    /* setup condition variable and mutex for waiting on button presses */
-    if ((ec->remappingWaitMutex = SDL_CreateMutex()) == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "controllers.c", "Couldn't create SDL mutex for button remapping wait: %s\n", SDL_GetError());
-        return ERROR_CREATING_REMAP_WAIT_MUTEX;
-    }
-    if ((ec->remappingCondVar = SDL_CreateMutex()) == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "controllers.c", "Couldn't create SDL condition variable for button remapping wait: %s\n", SDL_GetError());
-        return ERROR_CREATING_REMAP_COND_VAR;
-    }
-
-    /* setup event filter */
-    EmuBundle eb;
-    eb.ec = ec;
-    eb.s = s;
-    copyOfUserEventCode = eb.userEventType = SDL_RegisterEvents(3);
-
-    /* set paint to default state of OK */
-    SDL_AtomicSet(&eb.dontPaint, 0);
-
-    /* set event filter function going */
-    SDL_SetEventFilter(ControllerRemappingEventFilter, (void *)&eb);
-
-    /* create thread to run logic */
-    SDL_AtomicSet(&eb.logicQuit, 0);
-    eb.logicThread = SDL_CreateThread(RemappingLogicFunction, "remappingLogicThread", (void *)&eb);
-    if (eb.logicThread == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "init.c", "Error creating remapping logic thread, aborting...");
-        return ERROR_CREATING_LOGIC_THREAD;
-    }
-    SDL_DetachThread(eb.logicThread);
-
-    /* paint loop */
-    SDL_Event e;
-    signed_emuint waitStatus = 0;
-
-    while ((waitStatus = SDL_WaitEvent(&e))) {
-        if (e.type == eb.userEventType) {
-            if (e.user.code == ACTION_PAINT)
-                util_paintFrame((EmuBundle *)e.user.data1);
-            else if (e.user.code == MASTEREMU_QUIT)
-                break;
-        }
-    }
-
-    if (waitStatus != 1)
-        __android_log_print(ANDROID_LOG_ERROR, "MasterEmuDebug", "Error waiting on event: %s", SDL_GetError());
-
-    __android_log_print(ANDROID_LOG_VERBOSE, "MasterEmuDebug", "Exiting controller remapping mode...");
-
-    /* destroy timer mutex */
-    SDL_DestroyMutex(ec->remappingTimerMutex);
-
-    /* destroy wait condition var and mutex */
-    SDL_DestroyMutex(ec->remappingWaitMutex);
-    SDL_DestroyCond(ec->remappingCondVar);
-
-    /* this shuts down SDL */
-    util_shutdownSDL(s, false);
-
     return ALL_GOOD;
-}
-
-/* this is the function which runs the logic for remapping buttons, from a separate thread */
-static int RemappingLogicFunction(void *p) {
-    /* cast p to EmuBundle pointer */
-    EmuBundle *eb = (EmuBundle *)p;
-    EmulatorContainer *ec = eb->ec;
-
-    /* declare array to store mapping codes */
-    emuint mappings[8];
-    memset(mappings, 0, sizeof(mappings));
-
-    /* start emulation loop here */
-    for (signed_emuint i = 0; i < 8; i++) {
-
-        clearRemappedShowFlags(ec);
-
-        switch (i) {
-        case 0:
-            ec->touches.up = 1;
-            break;
-        case 1:
-            ec->touches.down = 1;
-            break;
-        case 2:
-            ec->touches.left = 1;
-            break;
-        case 3:
-            ec->touches.right = 1;
-            break;
-        case 4:
-            ec->touches.buttonOne = 1;
-            break;
-        case 5:
-            ec->touches.buttonTwo = 1;
-            break;
-        case 6:
-            ec->touches.pauseStart = 1;
-            break;
-        case 7:
-            ec->showBack = true;
-            break;
-        }
-
-        util_triggerRemapPainting(eb);
-        SDL_CondWait(ec->remappingCondVar, ec->remappingWaitMutex);
-
-        /* detect what button was pressed */
-        signed_emuint buttonCode = SDL_AtomicGet(&ec->codeOfPressedButton);
-        emubool codeAlreadyUsed = false;
-        for (signed_emuint j = 0; j < i; j++) {
-            if (mappings[j] == buttonCode) {
-                /* we have already used this button, try again */
-                codeAlreadyUsed = true;
-                i--;
-                break;
-            }
-        }
-
-        /* store button code in mappings array */
-        if (!codeAlreadyUsed)
-            mappings[i] = buttonCode;
-    }
-
-    /* write codes in string form to the backing file */
-    util_writeButtonMapping(mappings, sizeof(mappings) / sizeof(emuint));
-
-    /* end this thread now */
-    util_handleQuit(copyOfUserEventCode);
-
-    return 0;
-}
-
-static void clearRemappedShowFlags(EmulatorContainer *ec)
-{
-    ec->touches.up = -1;
-    ec->touches.down = -1;
-    ec->touches.left = -1;
-    ec->touches.right = -1;
-    ec->touches.buttonOne = -1;
-    ec->touches.buttonTwo = -1;
-    ec->touches.pauseStart = -1;
-    ec->showBack = false;
 }
