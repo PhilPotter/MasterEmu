@@ -231,7 +231,7 @@ static int MasterEmuEventFilter(void *userdata, SDL_Event *event) {
         /* deal with resize */
         if ((*event).window.event == SDL_WINDOWEVENT_RESIZED) {
             returnVal = 0;
-            util_handleWindowResize(ec, s);
+            util_handleWindowResize(ec, s, true);
         }
     } else if ((*event).type == SDL_JOYAXISMOTION) {
         switch ((*event).jaxis.axis) {
@@ -268,6 +268,13 @@ static int ControllerRemappingEventFilter(void *userdata, SDL_Event *event) {
         returnVal = 0;
         util_pollAndSetControllerState(eb);
         SDL_CondBroadcast(ec->remappingCondVar);
+    } else if ((*event).type == SDL_WINDOWEVENT) {
+        /* deal with resize */
+        if ((*event).window.event == SDL_WINDOWEVENT_RESIZED) {
+            returnVal = 0;
+            util_handleWindowResize(ec, s, false);
+            util_triggerRemapPainting(eb);
+        }
     }
 
     return returnVal;

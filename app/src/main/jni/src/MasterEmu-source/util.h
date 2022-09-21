@@ -133,7 +133,7 @@ emubool util_isSmsGgROM(emuint checksum); /* this tells us if the Game Gear ROM 
 void util_handleQuit(emuint userEventCode); /* this lets us quit the emulator */
 void util_paintFrame(EmuBundle *eb); /* this paints one frame for us */
 EmulatorContainer *util_loadRom(EmulatorContainer *ec, signed_emubyte *romData, emuint romSize); /* this loads the ROM from its file */
-emuint util_handleWindowResize(EmulatorContainer *ec, SDL_Collection s); /* this deals with window resizing */
+emuint util_handleWindowResize(EmulatorContainer *ec, SDL_Collection s, emubool wipeTouches); /* this deals with window resizing */
 void util_dealWithTouch(EmulatorContainer *ec, SDL_Collection s, SDL_Event *event); /* this deals with touch events */
 emuint util_saveState(EmulatorContainer *ec, char *fileName); /* this saves the state of the emulator to a file */
 emuint util_loadState(EmulatorContainer *ec, char *fileName, emubyte **saveState); /* this loads the state of the emulator to memory */

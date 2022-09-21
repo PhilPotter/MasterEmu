@@ -290,7 +290,7 @@ SDL_Collection util_setupSDL(JNIEnv *env, jclass cls, jobject obj, EmulatorConta
         s->pixelsForOneInch *= LARGER_BUTTONS_FACTOR;
 
     /* set initial layout of buttons + game window */
-    if (util_handleWindowResize(ec, s)) {
+    if (util_handleWindowResize(ec, s, true)) {
         return NULL;
     }
 
@@ -1074,7 +1074,7 @@ void util_handleQuit(emuint userEventCode)
 }
 
 /* this function deals with resize events and is also called during SDL setup */
-emuint util_handleWindowResize(EmulatorContainer *ec, SDL_Collection s)
+emuint util_handleWindowResize(EmulatorContainer *ec, SDL_Collection s, emubool wipeTouches)
 {
     /* determine new screen resolution */
     SDL_DisplayMode m;
@@ -1167,18 +1167,20 @@ emuint util_handleWindowResize(EmulatorContainer *ec, SDL_Collection s)
     s->downRightRect->y = s->dpadRect->y + (s->downRightRect->h * 2);
 
     /* reset all touches */
-    (*ec).touches.up = -1;
-    (*ec).touches.down = -1;
-    (*ec).touches.left = -1;
-    (*ec).touches.right = -1;
-    (*ec).touches.upLeft = -1;
-    (*ec).touches.upRight = -1;
-    (*ec).touches.downLeft = -1;
-    (*ec).touches.downRight = -1;
-    (*ec).touches.buttonOne = -1;
-    (*ec).touches.buttonTwo = -1;
-    (*ec).touches.pauseStart = -1;
-    (*ec).touches.both = -1;
+    if (wipeTouches) {
+        (*ec).touches.up = -1;
+        (*ec).touches.down = -1;
+        (*ec).touches.left = -1;
+        (*ec).touches.right = -1;
+        (*ec).touches.upLeft = -1;
+        (*ec).touches.upRight = -1;
+        (*ec).touches.downLeft = -1;
+        (*ec).touches.downRight = -1;
+        (*ec).touches.buttonOne = -1;
+        (*ec).touches.buttonTwo = -1;
+        (*ec).touches.pauseStart = -1;
+        (*ec).touches.both = -1;
+    }
 
     return ALL_GOOD;
 }

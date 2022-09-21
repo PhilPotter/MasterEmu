@@ -10,6 +10,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,21 +46,15 @@ public class ZipRomPicker extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        else
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-    }
-
-    /**
-     * This method saves the extra bundle and allows us to handle screen
-     * reorientations properly.
-     */
-    @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        // transfer mappings
-        Bundle extra = getIntent().getBundleExtra("MAIN_BUNDLE");
-        savedInstanceState.putAll(extra);
+        if (OptionStore.orientation_lock) {
+            if (OptionStore.orientation.equals("portrait")) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            } else if (OptionStore.orientation.equals("landscape")) {
+               setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            }
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+        }
     }
 
     /**

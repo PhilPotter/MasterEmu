@@ -46,10 +46,15 @@ public class ZipBrowser extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        else
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        if (OptionStore.orientation_lock) {
+            if (OptionStore.orientation.equals("portrait")) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            } else if (OptionStore.orientation.equals("landscape")) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            }
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+        }
     }
 
     /**
