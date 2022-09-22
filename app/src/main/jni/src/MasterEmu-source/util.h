@@ -86,6 +86,7 @@ struct CurrentControllerState {
        them like this for easy indexing */
     SDL_atomic_t xAxis;
     SDL_atomic_t yAxis;
+    SDL_atomic_t noPauseAllowed;
     emubool buttonArray[SDL_CONTROLLER_BUTTON_MAX];
 };
 typedef struct CurrentControllerState CurrentControllerState;

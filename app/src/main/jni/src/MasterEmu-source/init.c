@@ -250,6 +250,9 @@ static int MasterEmuEventFilter(void *userdata, SDL_Event *event) {
     } else if ((*event).type == SDL_FINGERUP || (*event).type == SDL_FINGERDOWN || (*event).type == SDL_FINGERMOTION) {
         returnVal = 0;
         util_dealWithTouch(ec, s, event);
+    } else if ((*event).type == SDL_CONTROLLERBUTTONUP && (*event).cbutton.button == ec->buttonMapping.pauseStart) {
+        /* mapped pause button has been released - allow pauses to happen again */
+        SDL_AtomicSet(&ec->currentControllerState.noPauseAllowed, 0);
     }
 
     return returnVal;

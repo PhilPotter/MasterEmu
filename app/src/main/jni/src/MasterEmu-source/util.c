@@ -1429,8 +1429,13 @@ void util_dealWithButtons(EmuBundle *eb)
         else
             console_handleTempStart(c, 2, 0);
     } else {
-        if (ccs->buttonArray[bm->pauseStart])
+        /* use our atomic flag to stop this button being pressed again
+           until it is released or we can trigger a flurry of NMIs and
+           jittery pause/unpause behaviour */
+        if (ccs->buttonArray[bm->pauseStart] && !SDL_AtomicGet(&ccs->noPauseAllowed)) {
             console_handleTempPauseStatus(c, 1, true);
+            SDL_AtomicSet(&ccs->noPauseAllowed, 1);
+        }
     }
 
     /* handle back button */
