@@ -29,6 +29,8 @@ Update (4.0.0):
 
 * Expanded permissions checks for Bluetooth controllers to work more reliably.
 
+* Adjusted colour of buttons.
+
 * Various bug fixes/modernisations all over the place.
 
 Update (3.3.4):
