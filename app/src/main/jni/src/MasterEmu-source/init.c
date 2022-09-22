@@ -250,9 +250,6 @@ static int MasterEmuEventFilter(void *userdata, SDL_Event *event) {
     } else if ((*event).type == SDL_FINGERUP || (*event).type == SDL_FINGERDOWN || (*event).type == SDL_FINGERMOTION) {
         returnVal = 0;
         util_dealWithTouch(ec, s, event);
-    } else if ((*event).type == SDL_CONTROLLERBUTTONUP && (*event).cbutton.which == 0 && (*event).cbutton.button == SDL_CONTROLLER_BUTTON_B) {
-        returnVal = 0;
-        init_loadPauseMenu(eb);
     }
 
     return returnVal;
