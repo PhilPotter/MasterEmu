@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.zip.ZipOutputStream;
@@ -161,6 +162,11 @@ public class StateIO {
                     if (current.isDirectory()) {
                         // make the directory if it doesn't exist
                         File currentDir = new File(base + "/" + current.getName());
+
+                        // do security check on path - skip if false (will throw on security error)
+                        if (!zipPathTraversalVulnerabilityCheck(currentDir, base))
+                            continue;
+
                         if (!currentDir.exists()) {
                             currentDir.mkdir();
                         }
@@ -168,6 +174,11 @@ public class StateIO {
                     else {
                         // delete file if it already exists, and extract from zip file
                         File currentFile = new File(base + "/" + current.getName());
+
+                        // do security check on path - skip if false (will throw on security error)
+                        if (!zipPathTraversalVulnerabilityCheck(currentFile, base))
+                            continue;
+
                         if (currentFile.exists())
                             currentFile.delete();
 
@@ -295,6 +306,22 @@ public class StateIO {
         catch (Exception e) {
             System.err.println("Couldn't close ZipInputStream zos...");
         }
+    }
+
+    private boolean zipPathTraversalVulnerabilityCheck(File f, String base) {
+        // Security check for zip path traversal vulnerability
+        try {
+            if (f.getCanonicalPath().startsWith(base + "/")) {
+                // Throw here if we are not extracting to canonical path
+                throw new SecurityException("ZIP traversal vulnerability triggered");
+            }
+        }
+        catch (IOException e) {
+            // If we got an IO exception move onto next entry
+            return false;
+        }
+
+        return true;
     }
 
     // filters list of items from savestate dir to only give us
