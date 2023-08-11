@@ -2,8 +2,8 @@ apply plugin: 'com.android.application'
 
 android {
     namespace "uk.co.philpotter.masteremu"
-    compileSdkVersion 33
-    buildToolsVersion "34.0.0"
+    compileSdk 33
+    buildToolsVersion = "34.0.0"
 
     defaultConfig {
         applicationId "uk.co.philpotter.masteremu"
