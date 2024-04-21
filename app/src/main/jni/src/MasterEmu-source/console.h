@@ -4,7 +4,7 @@
 #ifndef CONSOLE_INCLUDE
 #define CONSOLE_INCLUDE
 #include <stdio.h>
-#include "../../SDL-release-2.24.0/include/SDL.h"
+#include "../../SDL-release-2.30.2/include/SDL.h"
 #include "datatypes.h"
 
 /* define opaque pointer type for dealing with the Master System console */

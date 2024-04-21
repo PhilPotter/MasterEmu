@@ -5,7 +5,7 @@
 #define UTIL_INCLUDE
 #include <stdio.h>
 #include <jni.h>
-#include "../../SDL-release-2.24.0/include/SDL.h"
+#include "../../SDL-release-2.30.2/include/SDL.h"
 #include "datatypes.h"
 
 #define LARGER_BUTTONS_FACTOR 1.3
