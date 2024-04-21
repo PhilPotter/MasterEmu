@@ -187,6 +187,24 @@
             <LinearLayout android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginBottom="10sp"
+                android:gravity="center">
+                <uk.co.philpotter.masteremu.ControllerTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_colour"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:text="Privacy Policy"
+                    android:id="@+id/title_privacy_policy_button"
+                    android:padding="5sp"
+                    android:background="@drawable/view_border"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:gravity="center">
                 <uk.co.philpotter.masteremu.ControllerTextView
                     android:layout_width="wrap_content"

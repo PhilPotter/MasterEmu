@@ -17,6 +17,10 @@ Codebase uses SDL and SDL_image for cross-platform purposes, as it is based upon
 
 Please show your love and constructive feedback by e-mailing support@philpotter.co.uk - feature requests are welcome. Also, checkout the git repository at https://github.com/PhilPotter/MasterEmu and build your own copy if desired. MasterEmu is licensed under the GNU General Public License, version 3.
 
+Update (4.0.2):
+
+* Updated SDL to 2.30.2 and SDL_image to 2.8.2, as well as introducing dedicated privacy policy button. Also now targeting API level 34 (Android 14) and a minimum of API level 21 (Android 5).
+
 Update (4.0.1):
 
 * Tweak zip file import for save states to improve security.

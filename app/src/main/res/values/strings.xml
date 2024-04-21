@@ -27,5 +27,6 @@
     <string name="controllermapping_header">Controller Mapping</string>
     <string name="wait_str">Please Wait</string>
     <string name="pottersoft_url">https://www.philpotter.co.uk</string>
+    <string name="privacy_policy_url">https://www.philpotter.co.uk/masteremu_privacy_policy.html</string>
     <string name="github_url">https://github.com/PhilPotter/MasterEmu</string>
 </resources>

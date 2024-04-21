@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -115,6 +116,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         ControllerTextView title_credits_button = (ControllerTextView)findViewById(R.id.title_credits_button);
         ControllerTextView title_extras_button = (ControllerTextView)findViewById(R.id.title_extras_button);
         ControllerTextView title_manage_states_button = (ControllerTextView)findViewById(R.id.title_manage_states_button);
+        ControllerTextView title_privacy_policy_button = (ControllerTextView)findViewById(R.id.title_privacy_policy_button);
         ControllerTextView title_exit_button = (ControllerTextView)findViewById(R.id.title_exit_button);
         title_load_button.setOnTouchListener(bcl);
         title_options_button.setOnTouchListener(bcl);
@@ -123,6 +125,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         title_credits_button.setOnTouchListener(bcl);
         title_extras_button.setOnTouchListener(bcl);
         title_manage_states_button.setOnTouchListener(bcl);
+        title_privacy_policy_button.setOnTouchListener(bcl);
         title_exit_button.setOnTouchListener(bcl);
 
         // Change visiblity
@@ -138,6 +141,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         title_credits_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         title_extras_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         title_manage_states_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        title_privacy_policy_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         title_exit_button.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         if (title_load_button.getMeasuredWidth() > longest)
             longest = title_load_button.getMeasuredWidth();
@@ -153,6 +157,8 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
             longest = title_extras_button.getMeasuredWidth();
         if (title_manage_states_button.getMeasuredWidth() > longest)
             longest = title_manage_states_button.getMeasuredWidth();
+        if (title_privacy_policy_button.getMeasuredWidth() > longest)
+            longest = title_privacy_policy_button.getMeasuredWidth();
         if (title_exit_button.getMeasuredWidth() > longest)
             longest = title_exit_button.getMeasuredWidth();
         title_load_button.setLayoutParams(new LayoutParams(longest, title_load_button.getMeasuredHeight()));
@@ -162,6 +168,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         title_credits_button.setLayoutParams(new LayoutParams(longest, title_credits_button.getMeasuredHeight()));
         title_extras_button.setLayoutParams(new LayoutParams(longest, title_extras_button.getMeasuredHeight()));
         title_manage_states_button.setLayoutParams(new LayoutParams(longest, title_manage_states_button.getMeasuredHeight()));
+        title_privacy_policy_button.setLayoutParams(new LayoutParams(longest, title_privacy_policy_button.getMeasuredHeight()));
         title_exit_button.setLayoutParams(new LayoutParams(longest, title_exit_button.getMeasuredHeight()));
 
         // Set drawables on buttons and create their intents
@@ -210,6 +217,10 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         title_manage_states_button.setInactiveDrawable(light);
         title_manage_states_button.setHighlightedTextColour(darkText);
         title_manage_states_button.setUnhighlightedTextColour(lightText);
+        title_privacy_policy_button.setActiveDrawable(dark);
+        title_privacy_policy_button.setInactiveDrawable(light);
+        title_privacy_policy_button.setHighlightedTextColour(darkText);
+        title_privacy_policy_button.setUnhighlightedTextColour(lightText);
         title_exit_button.setActiveDrawable(dark);
         title_exit_button.setInactiveDrawable(light);
         title_exit_button.setHighlightedTextColour(darkText);
@@ -224,6 +235,12 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         title_extras_button.setIntent(new Intent(TitlescreenActivity.this, ExtrasActivity.class));
         title_manage_states_button.setIntent(new Intent(TitlescreenActivity.this, ManageStatesActivity.class));
 
+        // Set privacy policy intent
+        Intent privacy_policy_intent = new Intent(Intent.ACTION_VIEW);
+        String privacy_policy_url = getResources().getString(R.string.privacy_policy_url);
+        privacy_policy_intent.setData(Uri.parse(privacy_policy_url));
+        title_privacy_policy_button.setIntent(privacy_policy_intent);
+
         // Create selection objects
         selectionObj = new ControllerSelection();
         selectionObj.addMapping(title_load_button);
@@ -233,6 +250,7 @@ public class TitlescreenActivity extends Activity implements ActivityCompat.OnRe
         selectionObj.addMapping(title_credits_button);
         selectionObj.addMapping(title_extras_button);
         selectionObj.addMapping(title_manage_states_button);
+        selectionObj.addMapping(title_privacy_policy_button);
         selectionObj.addMapping(title_exit_button);
 
         // Set focus
