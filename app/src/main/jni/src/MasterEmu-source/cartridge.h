@@ -1,5 +1,5 @@
 /* MasterEmu cartridge header file
-   copyright Phil Potter, 2022 */
+   copyright Phil Potter, 2024 */
 
 #ifndef CARTRIDGE_INCLUDE
 #define CARTRIDGE_INCLUDE

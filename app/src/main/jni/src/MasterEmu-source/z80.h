@@ -1,5 +1,5 @@
 /* MasterEmu Z80 header file
-   copyright Phil Potter, 2022 */
+   copyright Phil Potter, 2024 */
 
 #ifndef Z80_INCLUDE
 #define Z80_INCLUDE

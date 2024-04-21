@@ -1,5 +1,5 @@
 /* MasterEmu SN76489 sound chip header file
-   copyright Phil Potter, 2022 */
+   copyright Phil Potter, 2024 */
 
 #ifndef SN76489_INCLUDE
 #define SN76489_INCLUDE

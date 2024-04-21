@@ -1,5 +1,5 @@
 /* MasterEmu controllers header file
-   copyright Phil Potter, 2022 */
+   copyright Phil Potter, 2024 */
 
 #ifndef CONTROLLERS_INCLUDE
 #define CONTROLLERS_INCLUDE

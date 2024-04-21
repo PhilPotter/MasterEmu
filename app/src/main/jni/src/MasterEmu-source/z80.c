@@ -1,5 +1,5 @@
 /* MasterEmu Z80 source code file
-   copyright Phil Potter, 2022 */
+   copyright Phil Potter, 2024 */
 
 #include <stdlib.h>
 #include <android/log.h>

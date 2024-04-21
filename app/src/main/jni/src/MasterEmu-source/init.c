@@ -1,5 +1,5 @@
 /* MasterEmu initialisation source code file
-   copyright Phil Potter, 2022 */
+   copyright Phil Potter, 2024 */
 
 #include <stdio.h>
 #include <stdlib.h>

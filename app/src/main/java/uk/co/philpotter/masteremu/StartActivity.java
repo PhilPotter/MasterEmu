@@ -1,5 +1,5 @@
 /* MasterEmu start (and former ad consent) screen source code file
-   copyright Phil Potter, 2022 */
+   copyright Phil Potter, 2024 */
 
 package uk.co.philpotter.masteremu;
 

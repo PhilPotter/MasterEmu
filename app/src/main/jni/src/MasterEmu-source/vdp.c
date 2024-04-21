@@ -1,5 +1,5 @@
 /* MasterEmu SN76489 VDP source code file
-   copyright Phil Potter, 2022 */
+   copyright Phil Potter, 2024 */
 
 #include <stdlib.h>
 #include <string.h>
