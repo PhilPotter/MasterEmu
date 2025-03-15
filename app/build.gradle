@@ -2,13 +2,13 @@ apply plugin: 'com.android.application'
 
 android {
     namespace "uk.co.philpotter.masteremu"
-    compileSdk 35
-    buildToolsVersion = "35.0.0"
+    compileSdk 36
+    buildToolsVersion = "36.0.0"
 
     defaultConfig {
         applicationId "uk.co.philpotter.masteremu"
         minSdkVersion 21
-        targetSdkVersion 35
+        targetSdkVersion 36
         versionCode 172
         versionName "4.0.2"
         ndk {
