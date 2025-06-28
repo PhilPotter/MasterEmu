@@ -461,6 +461,9 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
                 SDLActivity.onNativeDropFile(filename);
             }
         }
+
+        // After setting content view and before returning, enable immersive mode
+        enableImmersiveMode();
     }
 
     protected void pauseNativeThread() {
@@ -510,6 +513,9 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         if (!mHasMultiWindow) {
             resumeNativeThread();
         }
+
+        // Re-apply immersive mode on resume
+        enableImmersiveMode();
     }
 
     @Override
@@ -587,6 +593,8 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
            SDLActivity.handleNativeState();
            nativeFocusChanged(true);
 
+           // Re-apply immersive mode when window gains focus
+           enableImmersiveMode();
         } else {
            nativeFocusChanged(false);
            if (!mHasMultiWindow) {
@@ -1663,19 +1671,24 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         dialog.show();
     }
 
+    private void enableImmersiveMode() {
+        if (Build.VERSION.SDK_INT >= 19) {
+            final View decorView = getWindow().getDecorView();
+            int flags = View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+            decorView.setSystemUiVisibility(flags);
+        }
+    }
+
     private final Runnable rehideSystemUi = new Runnable() {
         @Override
         public void run() {
-            if (Build.VERSION.SDK_INT >= 19 /* Android 4.4 (KITKAT) */) {
-                int flags = View.SYSTEM_UI_FLAG_FULLSCREEN |
-                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
-                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.INVISIBLE;
-
-                SDLActivity.this.getWindow().getDecorView().setSystemUiVisibility(flags);
-            }
+            // Use the immersive mode method here
+            enableImmersiveMode();
         }
     };
 
