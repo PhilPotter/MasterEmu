@@ -28,8 +28,9 @@ android {
         jni.srcDirs = []
     }
 
+    // Append NDK directory to User 'Path' in Windows to use 'ndk-build.cmd'
     task ndkBuild(type: Exec) {
-        commandLine 'ndk-build', '-C', file('src/main/jni').absolutePath
+        commandLine 'ndk-build.cmd', '-C', file('src/main/jni').absolutePath
     }
 
     tasks.withType(JavaCompile) {

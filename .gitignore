@@ -1,3 +1,8 @@
+# Custom
+keystore
+.vscode
+app/debug
+
 # Built application files
 *.apk
 *.ap_

@@ -9,6 +9,7 @@ import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 
 import android.content.Intent;
 
@@ -95,6 +96,22 @@ public class FileBrowser extends Activity {
                 startActivityForResult(openStateFile, IMPORT_STATES_REQUEST_CODE);
                 break;
         }
+    }
+
+    /**
+     * This method enables immersive full screen mode.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        View decorView = getWindow().getDecorView();
+        decorView.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
     }
 
     // Put the ROM load routine here to generalise it and allow use by ZIP and non-ZIP
